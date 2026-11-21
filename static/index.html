@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0d1117">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>OBD Dash</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <div class="tabs" id="tabs"></div>
+    <div class="actions">
+      <button id="recBtn" class="rec" title="Record this trip to the database">● REC</button>
+      <span class="status" id="status" title="Adapter status"><i></i><span id="statusText">…</span></span>
+      <button id="editBtn" class="icon" title="Edit dashboard">✎</button>
+      <button id="menuBtn" class="icon" title="Menu">☰</button>
+    </div>
+  </header>
+
+  <div class="editbar" id="editbar" hidden>
+    <button id="addWidgetBtn" class="primary">+ Add sensor</button>
+    <button id="renameDashBtn">Rename</button>
+    <button id="deleteDashBtn" class="danger">Delete dashboard</button>
+    <span class="spacer"></span>
+    <button id="doneBtn" class="primary">Done</button>
+  </div>
+
+  <main id="grid" class="grid"></main>
+  <p class="empty" id="empty" hidden>This dashboard is empty. Tap ✎ then “Add sensor”.</p>
+
+  <footer id="footer"></footer>
+
+  <!-- Add / edit widget -->
+  <dialog id="widgetDlg">
+    <form method="dialog" id="widgetForm">
+      <h2 id="widgetDlgTitle">Add sensor</h2>
+      <label>Sensor
+        <input id="pidSearch" type="search" placeholder="Search sensors…" autocomplete="off">
+      </label>
+      <div class="chips" id="makeChips"></div>
+      <div class="pidlist" id="pidList"></div>
+      <button type="button" id="newCustomFromPicker" class="link">+ Define a custom sensor…</button>
+      <div class="row">
+        <label>Display
+          <select id="wType">
+            <option value="gauge">Gauge</option>
+            <option value="number">Number</option>
+            <option value="graph">Graph</option>
+          </select>
+        </label>
+        <label>Size
+          <select id="wSize">
+            <option value="1">Small</option>
+            <option value="2">Wide</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <label>Min <input id="wMin" type="number" step="any" placeholder="auto"></label>
+        <label>Max <input id="wMax" type="number" step="any" placeholder="auto"></label>
+        <label>Warn above <input id="wWarn" type="number" step="any" placeholder="none"></label>
+      </div>
+      <menu>
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button value="ok" class="primary" id="widgetOk">Add</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <!-- Menu / settings -->
+  <dialog id="menuDlg">
+    <form method="dialog">
+      <h2>Settings</h2>
+      <fieldset>
+        <legend>Data source</legend>
+        <label class="radio"><input type="radio" name="mode" value="car"> <span id="carLabel">Veepeak adapter (WiFi)</span></label>
+        <label class="radio"><input type="radio" name="mode" value="sim"> Simulator (no car)</label>
+        <div class="row" id="hostRow">
+          <label>Adapter IP <input id="obdHost" placeholder="192.168.0.10"></label>
+          <label>Port <input id="obdPort" type="number" placeholder="35000"></label>
+        </div>
+        <button type="button" id="applySource" class="primary">Reconnect</button>
+      </fieldset>
+      <fieldset>
+        <legend>Units</legend>
+        <label class="radio"><input type="radio" name="units" value="metric"> Metric (km/h, °C)</label>
+        <label class="radio"><input type="radio" name="units" value="imperial"> Imperial (mph, °F)</label>
+      </fieldset>
+      <fieldset>
+        <legend>Dashboards</legend>
+        <button type="button" id="newDashBtn">+ New dashboard</button>
+      </fieldset>
+      <fieldset>
+        <legend>Recorded trips</legend>
+        <p class="muted small">Tap ● REC to save every reading on the current dashboard, and where you were
+          when it was taken, to the database. Map shows each trip's route.</p>
+        <p id="gpsHelp" class="warnbox small" hidden></p>
+        <div id="tripList" class="trips"></div>
+        <a class="btnlink" href="map.html">Open trips map</a>
+        <p id="dbPath" class="muted small"></p>
+      </fieldset>
+      <fieldset>
+        <legend>Custom sensors</legend>
+        <p class="muted small">Add any manufacturer sensor if you know its address and formula
+          (from FORScan, Torque PID lists, forums).</p>
+        <div id="customList" class="trips"></div>
+        <button type="button" id="addCustomBtn">+ Custom sensor</button>
+      </fieldset>
+      <fieldset>
+        <legend>Test console</legend>
+        <p class="muted small">Send one read-only request and see the raw reply. Header picks the module:
+          7E0 engine, 7E1 transmission, blank = all.</p>
+        <div class="row">
+          <label style="flex:0 0 90px">Header <input id="consoleHeader" placeholder="7E1"></label>
+          <label>Command <input id="consoleCmd" placeholder="221E1C"></label>
+        </div>
+        <button type="button" id="consoleSend">Send</button>
+        <pre id="consoleOut" class="out"></pre>
+      </fieldset>
+      <fieldset>
+        <legend>Trouble codes</legend>
+        <button type="button" id="dtcBtn">Read check-engine codes</button>
+        <div id="dtcOut" class="dtc"></div>
+      </fieldset>
+      <div id="adapterInfo" class="muted small"></div>
+      <menu><button value="close" class="primary">Close</button></menu>
+    </form>
+  </dialog>
+
+  <!-- Custom sensor -->
+  <dialog id="customDlg">
+    <form method="dialog">
+      <h2>Custom sensor</h2>
+      <div class="row">
+        <label>Name <input id="c_name" placeholder="Transmission temp"></label>
+        <label style="flex:0 0 90px">Unit <input id="c_unit" placeholder="°C"></label>
+      </div>
+      <div class="row">
+        <label style="flex:0 0 90px">Header <input id="c_header" placeholder="7E1"></label>
+        <label>Command (mode + PID) <input id="c_cmd" placeholder="221E1C"></label>
+      </div>
+      <label>Formula <input id="c_formula" placeholder="(A*256+B)/16"></label>
+      <p class="muted small">A, B, C… are the reply's data bytes. Use signed(A) / signed16(A*256+B) for negative values.
+        Only read requests are allowed; commands that clear codes or write to the car are blocked.</p>
+      <div class="row">
+        <label>Gauge min <input id="c_min" type="number" step="any"></label>
+        <label>Gauge max <input id="c_max" type="number" step="any"></label>
+      </div>
+      <pre id="customOut" class="out"></pre>
+      <div id="customErr" class="err"></div>
+      <menu>
+        <button value="cancel" formnovalidate>Cancel</button>
+        <button type="button" id="customTest">Test on car</button>
+        <button type="button" id="customSave" class="primary">Save</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>

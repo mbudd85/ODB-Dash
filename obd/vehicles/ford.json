@@ -1,0 +1,21 @@
+{
+  "make": "Ford",
+  "about": "Ford enhanced (mode 22) sensors for CAN-bus vehicles (roughly 2008 and newer). Gathered from community lists (FORScan / Torque users). None are confirmed on Mark's car yet; addresses and formulas can differ by model, year and transmission. Check each with the test console before trusting it. Headers: 7E0 = engine (PCM), 7E1 = transmission (TCM), 726 = body (BCM).",
+  "sensors": [
+    {"code": "ford_tft", "name": "Transmission fluid temp", "unit": "°C", "min": -40, "max": 150,
+     "header": "7E1", "cmd": "221E1C", "formula": "signed16(A*256+B)/16", "category": "Transmission",
+     "verified": false, "note": "Most widely shared Ford PID (6R80, 6F35, 6F50/55, 10R80). Fairly reliable."},
+    {"code": "ford_gear", "name": "Current gear", "unit": "", "min": 0, "max": 10,
+     "header": "7E1", "cmd": "221E12", "formula": "A", "category": "Transmission",
+     "verified": false, "note": "Guess: commonly listed, but the value encoding differs between transmissions."},
+    {"code": "ford_oil_life", "name": "Oil life remaining", "unit": "%", "min": 0, "max": 100,
+     "header": "7E0", "cmd": "22054B", "formula": "A", "category": "Engine",
+     "verified": false, "note": "Guess: reported on some 2011+ models."},
+    {"code": "ford_odometer", "name": "Odometer (PCM)", "unit": "km", "min": 0, "max": 500000,
+     "header": "7E0", "cmd": "22DD01", "formula": "A*65536+B*256+C", "category": "Vehicle",
+     "verified": false, "note": "Commonly listed for 2010+ Ford PCMs."},
+    {"code": "ford_battery_soc", "name": "12V battery charge", "unit": "%", "min": 0, "max": 100,
+     "header": "726", "cmd": "224028", "formula": "A", "category": "Electrical",
+     "verified": false, "note": "Guess: from the body module on cars with battery monitoring (e.g. F-150, Focus)."}
+  ]
+}
