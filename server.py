@@ -45,10 +45,35 @@ class Bridge:
         self.elm: Elm327 | None = None
         self.task: asyncio.Task | None = None
         self.rate = 0.0
+        self.auto_record = False
+        self.auto_trip = False          # True while a trip was started by auto-record
+        self.gps = None                 # GpsdClient when --gps is on
 
     def config(self) -> dict:
         return {"mode": self.mode, "host": self.host, "port": self.port,
-                "recording": self.db.recording}
+                "recording": self.db.recording, "auto_record": self.auto_record,
+                "gps": self.gps.state if self.gps else None}
+
+    async def on_gps_fix(self, fix: dict):
+        self.db.log_location(fix["t"], fix["lat"], fix["lon"], fix["acc"], fix["speed"], fix["heading"])
+        await self.broadcast({"type": "gps", **fix})
+
+    def dashboard_codes(self) -> set[str]:
+        data = self.db.get_json("dashboards") or {}
+        return {w["code"] for d in data.get("dashboards", []) for w in d.get("widgets", [])}
+
+    async def auto_start(self):
+        if self.auto_record and not self.db.recording:
+            self.record_codes = self.dashboard_codes() or {"0C", "0D", "05", "RV"}
+            self.db.start_trip()
+            self.auto_trip = True
+            log.info("Auto-record: trip started")
+
+    async def auto_stop(self):
+        if self.auto_trip and self.db.recording:
+            self.db.stop_trip()
+            log.info("Auto-record: trip stopped")
+        self.auto_trip = False
 
     def start(self):
         self.task = asyncio.create_task(self.run())
@@ -94,6 +119,8 @@ class Bridge:
                     state="connected", message=f"Connected to {where}",
                     version=self.elm.version, protocol=self.elm.protocol,
                     supported=["RV"] + sorted(self.elm.supported))
+                await self.auto_start()
+                await self.set_status(**self.status)  # re-send so the REC button updates
                 await self.poll()
             except asyncio.CancelledError:
                 await self.elm.close()
@@ -101,6 +128,7 @@ class Bridge:
             except Exception as e:
                 log.warning("Adapter error: %r", e)
                 await self.elm.close()
+                await self.auto_stop()
                 await self.set_status(state="error", message=f"{where}: {e or type(e).__name__}. Retrying in 5 s.")
                 await asyncio.sleep(5)
 
@@ -344,6 +372,8 @@ def make_app(bridge: Bridge) -> web.Application:
 
     async def on_startup(app):
         bridge.start()
+        if bridge.gps:
+            app["gps_task"] = asyncio.create_task(bridge.gps.run())
     app.on_startup.append(on_startup)
 
     async def on_cleanup(app):
@@ -362,6 +392,9 @@ def main():
     ap.add_argument("--iphone", action="store_true",
                     help="serve your iPhone: listen on the network and turn on HTTPS (needed for location)")
     ap.add_argument("--https", action="store_true", help="also serve HTTPS on --https-port")
+    ap.add_argument("--gps", action="store_true", help="read positions from gpsd (USB GPS on a Raspberry Pi)")
+    ap.add_argument("--auto-record", action="store_true",
+                    help="record a trip automatically whenever the adapter is connected (car on)")
     ap.add_argument("--db", default=str(ROOT / "obd.db"), help="SQLite database file")
     ap.add_argument("--port", type=int, default=8080, help="web server port (plain HTTP)")
     ap.add_argument("--https-port", type=int, default=8443, help="HTTPS port")
@@ -379,6 +412,10 @@ def main():
     for err in registry.errors:
         log.warning("Sensor skipped: %s", err)
     bridge = Bridge("sim" if args.sim else "car", args.obd_host, args.obd_port, db, registry)
+    bridge.auto_record = args.auto_record
+    if args.gps:
+        from obd.gps import GpsdClient
+        bridge.gps = GpsdClient(bridge.on_gps_fix)
     app = make_app(bridge)
 
     ssl_ctx = None

@@ -60,8 +60,10 @@ async function loadDashboards() {
   let data = null;
   try { data = await (await fetch("api/dashboards")).json(); } catch {}
   if (!data) { try { data = JSON.parse(localStorage.getItem("dashboards")); } catch {} }
-  if (!data || !data.dashboards?.length) data = { dashboards: defaultDashboards() };
+  const fresh = !data || !data.dashboards?.length;
+  if (fresh) data = { dashboards: defaultDashboards() };
   state.dashboards = data.dashboards;
+  if (fresh) save();   // so the server knows what to auto-record before you edit anything
   state.active = localStorage.getItem("activeDash");
   if (!state.dashboards.find((d) => d.id === state.active)) state.active = state.dashboards[0].id;
 }
@@ -96,6 +98,7 @@ function connect() {
     const msg = JSON.parse(ev.data);
     if (msg.type === "status") onStatus(msg);
     else if (msg.type === "data") onData(msg);
+    else if (msg.type === "gps" && state.recording) gpsLabel("GPS");
   };
   ws.onclose = () => {
     onStatus({ state: "offline", message: "Server unreachable, retrying…" });
@@ -607,6 +610,9 @@ function gpsLabel(text) {
 
 function startGps() {
   if (gpsWatch !== null) return;
+  // Raspberry Pi with a USB GPS: the server records positions itself.
+  const serverGps = state.status.config?.gps;
+  if (serverGps != null) { gpsLabel(serverGps === "fix" ? "GPS" : "no GPS fix"); return; }
   if (!window.isSecureContext || !navigator.geolocation) {
     gpsLabel(state.recording ? "no GPS" : "");
     return;
