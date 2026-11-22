@@ -13,7 +13,8 @@ INSTANT = "CALC_MPG"
 AVERAGE = "CALC_AVG_MPG"
 HP = "CALC_HP"
 TORQUE = "CALC_TORQUE"
-CODES = (INSTANT, AVERAGE, HP, TORQUE)
+BOOST = "CALC_BOOST"
+CODES = (INSTANT, AVERAGE, HP, TORQUE, BOOST)
 
 GASOLINE_AFR = 14.7          # kg air per kg fuel
 GASOLINE_DENSITY = 737.0     # g per litre
@@ -39,7 +40,18 @@ CATALOG = [
      "category": "Performance", "make": "Calculated", "verified": False, "cmd": "", "header": None,
      "formula": "", "nbytes": 0,
      "note": "Estimate, same source as engine power. Torque = power ÷ RPM."},
+    {"code": BOOST, "name": "Boost / vacuum", "unit": "kPa", "min": -100, "max": 150,
+     "category": "Performance", "make": "Calculated", "verified": True, "cmd": "", "header": None,
+     "formula": "", "nbytes": 0,
+     "note": "Intake manifold pressure minus outside air pressure. Above 0 = boost (turbo, e.g. EcoBoost), "
+             "below 0 = vacuum. Shown in psi with imperial units."},
 ]
+
+
+def boost(values: dict) -> float | None:
+    if values.get("0B") is None:
+        return None
+    return round(values["0B"] - (values.get("33") or 101.3), 1)
 
 # Brake-specific fuel consumption of a typical gasoline engine: lb of fuel per hp per hour.
 BSFC = 0.5
@@ -81,6 +93,8 @@ def needed(supported: set[str], calc=CODES) -> list[str]:
     if HP in calc or TORQUE in calc:
         out.add("0C")
         out |= {"62", "63"} if has("62") and has("63") and supported else {"10"}
+    if BOOST in calc:
+        out |= {"0B"} | ({"33"} if has("33") else set())
     return sorted(out)
 
 

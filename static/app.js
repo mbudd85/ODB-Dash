@@ -11,6 +11,9 @@ const state = {
   units: localStorage.getItem("units") || "metric",
   editing: false,
   supported: null,      // Set of codes the car reports, null until known
+  vehicle: null,        // chosen vehicle profile id
+  profiles: [],
+  checked: {},          // factory sensor code -> answered when last checked
   latest: {},           // code -> value (raw, metric)
   history: {},          // code -> [[t, value], ...]
   widgets: new Map(),   // widget id -> {el, update()}
@@ -86,9 +89,13 @@ function save() {
 }
 
 // Standard PIDs: the car tells us which it has. Enhanced/custom: unknown until we ask.
+// Factory (mode 22) sensors: what "Check factory sensors" found, else whether it fits the chosen vehicle.
 const isSupported = (code) => {
   const p = state.pids[code];
-  return !state.supported || state.supported.has(code) || (p && p.make !== "Standard");
+  if (!p || p.make === "Standard") return !state.supported || state.supported.has(code);
+  if (p.make === "Calculated" || p.make === "Custom") return true;
+  if (code in state.checked) return state.checked[code];
+  return !(state.vehicle && p.fits && !p.fits.includes(state.vehicle));
 };
 
 const activeDash = () => state.dashboards.find((d) => d.id === state.active);
@@ -380,7 +387,9 @@ function renderPidList(filter = "") {
       const o = document.createElement("option");
       const ok = isSupported(p.code);
       const unit = unitFor(p).unit;
-      const tag = !ok ? " (not reported by this car)" : !p.verified ? (p.make === "Custom" ? " (custom)" : " (unverified)") : "";
+      const tag = !ok ? (p.make === "Standard" || p.code in state.checked ? " (not reported by this car)" : " (not for your vehicle)")
+        : state.checked[p.code] ? " ✓ answers on this car"
+        : !p.verified ? (p.make === "Custom" ? " (custom)" : " (unverified)") : "";
       o.value = p.code;
       o.textContent = p.name + (unit ? ` – ${unit}` : "") + tag;
       o.title = p.note || "";
@@ -580,6 +589,8 @@ $("#menuBtn").onclick = () => {
   document.querySelectorAll("input[name=units]").forEach((r) => (r.checked = r.value === state.units));
   $("#dtcOut").textContent = "";
   $("#misfireOut").textContent = "";
+  $("#probeOut").textContent = "";
+  loadVehicles();
   renderTrips();
   showLocationHelp();
   loadCustom().then(renderCustomList);
@@ -620,6 +631,43 @@ function nameO2Sensors(positions = state.o2 || {}) {
     if (m && positions[m[1]]) p.name = `O2 ${positions[m[1]]} ${m[2]} (#${m[1]})`;
   }
 }
+
+// ---------------------------------------------------------------- vehicle profile
+
+async function loadVehicles(data) {
+  data ||= await (await fetch("api/vehicles")).json();
+  state.profiles = data.profiles;
+  state.vehicle = data.selected;
+  state.checked = data.checked || {};
+  const sel = $("#vehicleSel");
+  sel.innerHTML = `<option value="">Any car (show every factory sensor)</option>` +
+    data.profiles.map((p) => `<option value="${p.id}">${p.name}</option>`).join("");
+  sel.value = state.vehicle || "";
+  $("#vehicleAbout").textContent = data.profiles.find((p) => p.id === state.vehicle)?.about || "";
+}
+$("#vehicleSel").onchange = async (e) => {
+  const r = await fetch("api/vehicle", { method: "PUT", headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ id: e.target.value || null }) });
+  await loadVehicles(await r.json());
+  $("#probeOut").textContent = "";
+  renderGrid();
+};
+$("#probeBtn").onclick = async () => {
+  const out = $("#probeOut");
+  out.textContent = "Asking the car… (about a second per sensor)";
+  try {
+    const r = await fetch("api/probe", { method: "POST" });
+    if (!r.ok) throw new Error(await r.text());
+    const { checked } = await r.json();
+    state.checked = checked;
+    const yes = Object.keys(checked).filter((c) => checked[c]).map((c) => state.pids[c]?.name || c);
+    const total = Object.keys(checked).length;
+    out.innerHTML = yes.length
+      ? `<b>${yes.length} of ${total}</b> answered: ${yes.map((n) => `<code>${n.replace(/</g, "&lt;")}</code>`).join(" ")}<p class="muted small">Those are now marked ✓ in Add sensor; the rest are hidden. A sensor that answers can still need its formula checked against a known gauge.</p>`
+      : `None of the ${total} factory sensors answered. The standard sensors still work.`;
+    renderGrid();
+  } catch (e) { out.textContent = "Couldn’t check: " + e.message; }
+};
 
 $("#misfireBtn").onclick = async () => {
   const out = $("#misfireOut");
@@ -844,6 +892,7 @@ async function renderTrips() {
 (async function init() {
   const pids = await (await fetch("api/pids")).json();
   for (const p of pids) state.pids[p.code] = p;
+  try { await loadVehicles(); } catch {}
   await loadDashboards();
   renderTabs();
   renderGrid();

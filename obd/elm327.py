@@ -66,6 +66,8 @@ class Elm327:
         self.version = ""
         self.protocol = ""
         self.o2_positions: dict[int, str] = {}   # sensor number 1-8 -> "bank 1 sensor 2"
+        self.can = False        # CAN (11 or 29 bit): allows the fast paths below
+        self.multi_ok = True    # engine computer answers several PIDs in one request
 
     async def connect(self):
         await self.t.open()
@@ -78,6 +80,9 @@ class Elm327:
         await self.detect_supported()
         await self.detect_o2_layout()
         self.protocol = _clean(await self.t.send("ATDP"))
+        self.can = _clean(await self.t.send("ATDPN"))[-1:] in ("6", "7", "8", "9")
+        if self.can:
+            await self.t.send("ATAT2")   # adaptive timing, aggressive: don't wait long after the reply
 
     async def close(self):
         await self.t.close()
@@ -139,9 +144,15 @@ class Elm327:
         return await self.read_sensor(sensor)
 
     async def read_sensor(self, sensor: Sensor) -> float | None:
+        cmd, header = sensor.cmd, sensor.header
+        if self.can:
+            if sensor.standard:
+                header = "7E0"   # ask only the engine computer, so one reply
+            if len(cmd) // 2 + sensor.nbytes <= 7:
+                cmd += "1"       # "expect 1 reply": the adapter returns at once instead of waiting
         async with self.io:
-            await self.set_header(sensor.header)
-            reply = await self.t.send(sensor.cmd)
+            await self.set_header(header)
+            reply = await self.t.send(cmd)
         data = parse_reply(reply, sensor.reply_prefix)
         if not data or len(data) < sensor.nbytes:
             return None
@@ -149,6 +160,37 @@ class Elm327:
             return round(sensor.decode(data), 3)
         except (ZeroDivisionError, OverflowError, ValueError):
             return None
+
+    async def read_standard(self, codes: list[str]) -> dict[str, float | None]:
+        """Several mode 01 PIDs, up to 6 per request on CAN cars (much faster than one by one)."""
+        sensors = [self.registry.get(c) for c in codes]
+        sensors = [s for s in sensors if s]
+        out: dict[str, float | None] = {}
+        if not (self.can and self.multi_ok):
+            for s in sensors:
+                out[s.code] = await self.read_sensor(s)
+            return out
+        for i in range(0, len(sensors), 6):
+            group = sensors[i:i + 6]
+            if len(group) == 1:
+                out[group[0].code] = await self.read_sensor(group[0])
+                continue
+            size = 1 + sum(1 + s.nbytes for s in group)
+            frames = 1 if size <= 7 else 1 + -(-(size - 6) // 7)
+            cmd = "01" + "".join(s.code for s in group) + (f"{frames:X}" if frames <= 15 else "")
+            async with self.io:
+                await self.set_header("7E0")
+                reply = await self.t.send(cmd)
+            got = parse_multi(reply, {s.code: s for s in group})
+            if not got:
+                log.info("Multi-PID requests not answered; reading one at a time")
+                self.multi_ok = False
+                for s in group:
+                    out[s.code] = await self.read_sensor(s)
+                continue
+            for s in group:
+                out[s.code] = got.get(s.code)
+        return out
 
     async def raw(self, cmd: str, header: str | None = None) -> str:
         """Test console: send any read-only command and return the raw reply."""
@@ -189,6 +231,23 @@ class Elm327:
             else:
                 out["cylinders"].append({"cyl": mid - 0xA1, **row})
         return out
+
+
+def parse_multi(reply: str, sensors: dict) -> dict[str, float | None]:
+    """'41 0C xx xx 0D xx ...' -> {code: value}. Stops at padding or an unexpected byte."""
+    data = parse_reply(reply, "41")
+    out = {}
+    i = 0
+    while data and i < len(data):
+        s = sensors.get(f"{data[i]:02X}")
+        if not s or s.code in out or i + 1 + s.nbytes > len(data):
+            break
+        try:
+            out[s.code] = round(s.decode(data[i + 1:i + 1 + s.nbytes]), 3)
+        except (ZeroDivisionError, OverflowError, ValueError):
+            out[s.code] = None
+        i += 1 + s.nbytes
+    return out
 
 
 def parse_mode06(reply: str, mid: int) -> dict[int, int]:

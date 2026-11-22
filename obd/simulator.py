@@ -137,10 +137,18 @@ class SimTransport:
         if cmd.startswith("ATSH"):
             self.header = cmd[4:]
             return "OK\r\r"
+        if cmd == "ATDPN":
+            return "A6\r\r"
         if cmd == "ATDP":
             return "AUTO, ISO 15765-4 (CAN 11/500)\r\r"
         if cmd.startswith("AT"):
             return "OK\r\r"
+        if cmd[:2] in ("01", "22") and len(cmd) % 2:
+            cmd = cmd[:-1]   # drop the "number of replies" digit
+        if cmd.startswith("01") and len(cmd) > 4:   # several PIDs at once
+            vals = self.car.values()
+            parts = [p + "".join(f"{b:02X}" for b in vals[p]) for p in (cmd[i:i + 2] for i in range(2, len(cmd), 2)) if p in vals]
+            return ("41" + "".join(parts) + "\r\r") if parts else "NO DATA\r\r"
         if cmd.startswith("22"):
             return self._enhanced(cmd[2:])
         if cmd == "06A0":

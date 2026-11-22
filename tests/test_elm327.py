@@ -75,8 +75,8 @@ class EnhancedTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(elm.header, "7E1")
         self.assertEqual(await elm.read("ford_oil_life"), 72)
         self.assertIsNone(await elm.read("mazda_atf_temp_alt"))   # refused (7F) -> None
-        rpm = await elm.read("0C")                                  # back to broadcast header
-        self.assertIsNone(elm.header)
+        rpm = await elm.read("0C")                                  # CAN: asks the engine computer only
+        self.assertEqual(elm.header, "7E0")
         self.assertTrue(rpm > 500)
 
     def test_parse_multiframe(self):
@@ -106,3 +106,23 @@ class Mode06Tests(unittest.TestCase):
         self.assertEqual([c["cyl"] for c in m["cylinders"]], [1, 2, 3, 4])
         self.assertEqual(m["cylinders"][2]["this_drive"], 4)
         self.assertEqual(m["total"]["this_drive"], 5)
+
+
+class MultiPidTests(unittest.TestCase):
+    def test_parse_multi(self):
+        from obd.elm327 import parse_multi
+        from obd.pids import Registry
+        r = Registry()
+        group = {c: r.get(c) for c in ("0C", "0D", "05")}
+        reply = "00A\r0:410C1AF80D32\r1:0550AAAAAAAAAA\r\r"
+        self.assertEqual(parse_multi(reply, group), {"0C": 1726.0, "0D": 50.0, "05": 40.0})
+
+    def test_sim_fast_path(self):
+        async def go():
+            elm = Elm327(SimTransport(latency=0))
+            await elm.connect()
+            return elm.can, await elm.read_standard(["0C", "0D", "05", "04", "11", "0B", "10"])
+        can, vals = asyncio.run(go())
+        self.assertTrue(can)
+        self.assertEqual(len(vals), 7)
+        self.assertTrue(all(v is not None for v in vals.values()), vals)

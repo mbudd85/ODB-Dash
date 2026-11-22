@@ -128,6 +128,15 @@
         <pre id="consoleOut" class="out"></pre>
       </fieldset>
       <fieldset>
+        <legend>Your vehicle</legend>
+        <p class="muted small">Standard sensors are detected automatically. Picking your vehicle shows the
+          factory extras that are known (or expected) to work on it.</p>
+        <select id="vehicleSel"></select>
+        <p id="vehicleAbout" class="muted small"></p>
+        <button type="button" id="probeBtn">Check factory sensors on this car</button>
+        <div id="probeOut" class="dtc"></div>
+      </fieldset>
+      <fieldset>
         <legend>Trouble codes</legend>
         <button type="button" id="dtcBtn">Read check-engine codes</button>
         <div id="dtcOut" class="dtc"></div>

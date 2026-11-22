@@ -148,7 +148,19 @@ class Bridge:
                 codes = sorted((set(codes) - set(economy.CODES)) | set(economy.needed(self.elm.supported, calc)))
             start = time.monotonic()
             values = {}
+            std = [c for c in codes if (sn := self.registry.get(c)) and sn.standard
+                   and (not self.elm.supported or c in self.elm.supported)]
+            if std:
+                try:
+                    values.update(await self.elm.read_standard(std))
+                    failures = 0
+                except asyncio.TimeoutError:
+                    failures += 1
+                    if failures >= 5:
+                        raise ConnectionError("adapter stopped responding")
             for code in codes:
+                if code in std:
+                    continue
                 sensor = self.registry.get(code)
                 if code != "RV" and sensor is None:
                     continue
@@ -167,6 +179,7 @@ class Bridge:
             if calc:
                 derived = self.economy.update(values)
                 derived[economy.HP], derived[economy.TORQUE] = economy.estimate_power(values, self.elm.supported)
+                derived[economy.BOOST] = economy.boost(values)
                 values.update({c: v for c, v in derived.items() if c in calc})
             now = time.time()
             self.db.log(now, values)
@@ -327,6 +340,47 @@ async def get_misfires(request):
     return web.json_response(await bridge.elm.read_misfires())
 
 
+PROFILES = json.loads((Path(__file__).parent / "obd" / "profiles.json").read_text())
+
+
+def _probe_key(db) -> str:
+    return "probe:" + (db.get_json("vehicle") or "any")
+
+
+async def get_vehicles(request):
+    db = request.app["db"]
+    return web.json_response({"profiles": PROFILES, "selected": db.get_json("vehicle"),
+                              "checked": db.get_json(_probe_key(db)) or {}})
+
+
+async def put_vehicle(request):
+    data = await request.json()
+    vid = data.get("id") or None
+    if vid and vid not in {p["id"] for p in PROFILES}:
+        raise web.HTTPBadRequest(text="unknown vehicle")
+    request.app["db"].set_json("vehicle", vid)
+    return await get_vehicles(request)
+
+
+async def post_probe(request):
+    """Ask the car for every factory sensor that fits the chosen vehicle (read-only mode 22 requests)."""
+    bridge: Bridge = request.app["bridge"]
+    db = request.app["db"]
+    if bridge.status.get("state") != "connected":
+        raise web.HTTPServiceUnavailable(text="Not connected to the adapter")
+    vid = db.get_json("vehicle")
+    results = {}
+    for s in list(bridge.registry.sensors.values()):
+        if s.make in ("Standard", "Custom") or (vid and s.fits is not None and vid not in s.fits):
+            continue
+        try:
+            results[s.code] = await bridge.elm.read_sensor(s) is not None
+        except Exception:
+            results[s.code] = False
+    db.set_json(_probe_key(db), results)
+    return web.json_response({"checked": results})
+
+
 async def get_config(request):
     return web.json_response(request.app["bridge"].config())
 
@@ -383,6 +437,9 @@ def make_app(bridge: Bridge) -> web.Application:
     app.router.add_get("/api/dtcs", get_dtcs)
     app.router.add_get("/api/misfires", get_misfires)
     app.router.add_get("/api/config", get_config)
+    app.router.add_get("/api/vehicles", get_vehicles)
+    app.router.add_put("/api/vehicle", put_vehicle)
+    app.router.add_post("/api/probe", post_probe)
     app.router.add_post("/api/config", post_config)
     app.router.add_post("/api/connect", post_connect)
     app.router.add_get("/api/custom-sensors", get_custom)
