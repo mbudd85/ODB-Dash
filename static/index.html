@@ -44,7 +44,10 @@
         <input id="pidSearch" type="search" placeholder="Search sensors…" autocomplete="off">
       </label>
       <div class="chips" id="makeChips"></div>
-      <div class="pidlist" id="pidList"></div>
+      <select id="pidSelect" class="pidselect" aria-label="Sensor"></select>
+      <div class="pidmeta"><span id="pidCount" class="muted small"></span>
+        <label class="radio small"><input type="checkbox" id="showUnsupported"> Show sensors this car doesn't report</label></div>
+      <p id="pidNote" class="muted small"></p>
       <button type="button" id="newCustomFromPicker" class="link">+ Define a custom sensor…</button>
       <div class="row">
         <label>Display

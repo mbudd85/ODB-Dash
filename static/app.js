@@ -65,7 +65,7 @@ async function loadDashboards() {
   state.dashboards = data.dashboards;
   if (fresh) save();   // so the server knows what to auto-record before you edit anything
   state.active = localStorage.getItem("activeDash");
-  if (!state.dashboards.find((d) => d.id === state.active)) state.active = state.dashboards[0].id;
+  if (state.active !== ALL && !state.dashboards.find((d) => d.id === state.active)) state.active = state.dashboards[0].id;
 }
 
 let saveTimer;
@@ -106,9 +106,12 @@ function connect() {
   };
 }
 
+const ALL = "__all";   // the "All sensors" tab
+const allCodes = () => Object.keys(state.pids).filter(isSupported);
+
 function subscribe() {
   if (state.ws?.readyState !== WebSocket.OPEN) return;
-  const codes = [...new Set(activeDash().widgets.map((w) => w.code))];
+  const codes = state.active === ALL ? allCodes() : [...new Set(activeDash().widgets.map((w) => w.code))];
   state.ws.send(JSON.stringify({ type: "subscribe", codes }));
 }
 
@@ -123,7 +126,7 @@ function onStatus(s) {
   el.title = s.message || "";
   $("#footer").textContent = s.message || "";
   if (s.supported) state.supported = new Set(s.supported);
-  if (s.state === "connected") renderGrid();
+  if (s.state === "connected") { renderGrid(); if (state.active === ALL) subscribe(); }
   if (s.config) { fillSourceForm(s.config); setRecording(!!s.config.recording); }
   el.classList.toggle("tappable", !!s.needsTap || s.state === "error");
   $("#adapterInfo").textContent = s.version ? `Adapter: ${s.version} · Protocol: ${s.protocol || "?"}` : "";
@@ -139,6 +142,7 @@ function onData(msg) {
     while (h.length && h[0][0] < t - HISTORY_SECONDS) h.shift();
   }
   for (const w of state.widgets.values()) w.update();
+  if (state.active === ALL) updateAllTable();
   if (state.status.state === "connected") {
     $("#footer").textContent = `${state.status.message} · ${msg.rate} readings/s`;
   }
@@ -156,6 +160,11 @@ function renderTabs() {
     b.onclick = () => switchDash(d.id);
     tabs.append(b);
   }
+  const all = document.createElement("button");
+  all.textContent = "All sensors";
+  all.className = state.active === ALL ? "active" : "";
+  all.onclick = () => switchDash(ALL);
+  tabs.append(all);
   const add = document.createElement("button");
   add.textContent = "+";
   add.className = "add";
@@ -175,8 +184,12 @@ function switchDash(id) {
 function renderGrid() {
   const grid = $("#grid");
   grid.innerHTML = "";
-  grid.classList.toggle("editing", state.editing);
   state.widgets.clear();
+  const allView = state.active === ALL;
+  grid.classList.toggle("alltable", allView);
+  $("#editBtn").hidden = allView;
+  if (allView) { $("#editbar").hidden = true; $("#empty").hidden = true; renderAllTable(); return; }
+  grid.classList.toggle("editing", state.editing);
   const dash = activeDash();
   $("#empty").hidden = dash.widgets.length > 0;
   dash.widgets.forEach((w, i) => {
@@ -338,39 +351,98 @@ function renderMakeChips() {
 }
 
 function renderPidList(filter = "") {
-  const list = $("#pidList");
-  list.innerHTML = "";
+  const sel = $("#pidSelect");
+  sel.innerHTML = "";
   const q = filter.toLowerCase();
+  const showAll = $("#showUnsupported").checked;
   const groups = {};
   for (const p of Object.values(state.pids)) {
     if (q && !p.name.toLowerCase().includes(q) && !p.category.toLowerCase().includes(q)) continue;
     if (makeFilter !== "All" && p.make !== makeFilter) continue;
+    if (!showAll && !isSupported(p.code) && p.code !== selectedCode) continue;
     const g = p.make === "Standard" ? p.category : `${p.make} · ${p.category}`;
     (groups[g] ||= []).push(p);
   }
   const order = (g) => (g.includes(" · ") ? 1 : 0);
-  for (const [cat, items] of Object.entries(groups).sort((a, b) => order(a[0]) - order(b[0]))) {
-    const h = document.createElement("div");
-    h.className = "cat"; h.textContent = cat;
-    list.append(h);
+  let count = 0;
+  for (const [cat, items] of Object.entries(groups).sort((a, b) => order(a[0]) - order(b[0]) || a[0].localeCompare(b[0]))) {
+    const og = document.createElement("optgroup");
+    og.label = cat;
     items.sort((a, b) => supportedRank(a) - supportedRank(b) || a.name.localeCompare(b.name));
     for (const p of items) {
-      const row = document.createElement("div");
+      const o = document.createElement("option");
       const ok = isSupported(p.code);
-      row.className = "pid" + (ok ? "" : " no") + (p.code === selectedCode ? " sel" : "");
-      row.innerHTML = `<span></span><small></small>`;
-      row.firstChild.textContent = p.name;
-      if (!p.verified) {
-        const tag = document.createElement("em");
-        tag.className = "unverified";
-        tag.textContent = p.make === "Custom" ? "custom" : "unverified";
-        row.firstChild.append(" ", tag);
-      }
-      row.title = p.note || (p.header ? `${p.header} ${p.cmd}` : "");
-      row.lastChild.textContent = ok ? unitFor(p).unit : "not supported";
-      row.onclick = () => { selectedCode = p.code; renderPidList($("#pidSearch").value); };
-      list.append(row);
+      const unit = unitFor(p).unit;
+      const tag = !ok ? " (not reported by this car)" : !p.verified ? (p.make === "Custom" ? " (custom)" : " (unverified)") : "";
+      o.value = p.code;
+      o.textContent = p.name + (unit ? ` – ${unit}` : "") + tag;
+      o.title = p.note || "";
+      og.append(o);
+      count++;
     }
+    sel.append(og);
+  }
+  if (!count) {
+    const o = document.createElement("option");
+    o.disabled = true; o.textContent = "No sensors match"; sel.append(o);
+    selectedCode = null;
+  } else if (selectedCode && sel.querySelector(`option[value="${selectedCode}"]`)) {
+    sel.value = selectedCode;
+  } else {
+    selectedCode = sel.querySelector("option:not([disabled])")?.value || null;
+    sel.value = selectedCode;
+  }
+  $("#pidCount").textContent = `${count} sensor${count === 1 ? "" : "s"}`;
+  showPidNote();
+}
+
+function showPidNote() {
+  const p = state.pids[selectedCode];
+  $("#pidNote").textContent = p?.note || "";
+}
+
+$("#pidSelect").onchange = (e) => { selectedCode = e.target.value; showPidNote(); };
+$("#showUnsupported").onchange = () => renderPidList($("#pidSearch").value);
+
+// ---------------------------------------------------------------- "All sensors" text view
+
+let allRows = new Map();
+
+function renderAllTable() {
+  const grid = $("#grid");
+  allRows = new Map();
+  const codes = allCodes().map((c) => state.pids[c]).filter(Boolean)
+    .sort((a, b) => (a.make === "Standard" ? 0 : 1) - (b.make === "Standard" ? 0 : 1)
+      || a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+  const table = document.createElement("table");
+  table.className = "sensors";
+  table.innerHTML = `<thead><tr><th>Sensor</th><th class="num">Value</th><th>Unit</th><th>Group</th></tr></thead>`;
+  const body = document.createElement("tbody");
+  for (const p of codes) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td></td><td class="num">–</td><td></td><td></td>`;
+    tr.children[0].textContent = p.name;
+    tr.children[2].textContent = unitFor(p).unit;
+    tr.children[3].textContent = p.make === "Standard" ? p.category : `${p.make} · ${p.category}`;
+    tr.title = p.note || "";
+    body.append(tr);
+    allRows.set(p.code, { td: tr.children[1], p });
+  }
+  table.append(body);
+  const note = document.createElement("p");
+  note.className = "muted small";
+  note.textContent = state.supported
+    ? `${codes.length} sensors this car reports. Every one is read in turn, so values refresh about every ${Math.max(1, Math.round(codes.length / 20))} s.`
+    : "Connect to the car to see which sensors it reports.";
+  grid.append(note, table);
+  updateAllTable();
+}
+
+function updateAllTable() {
+  for (const [code, { td, p }] of allRows) {
+    const raw = state.latest[code];
+    td.textContent = raw == null ? (code in state.latest ? "no reply" : "–") : fmt(unitFor(p).f(raw), p);
+    td.classList.toggle("muted", raw == null);
   }
 }
 const supportedRank = (p) => (isSupported(p.code) ? 0 : 1);
@@ -386,9 +458,9 @@ function openWidgetDialog(widget = null) {
   $("#wMax").value = widget?.max ?? "";
   $("#wWarn").value = widget?.warn ?? "";
   $("#pidSearch").value = "";
+  $("#showUnsupported").checked = false;
   renderMakeChips();
   renderPidList();
-  if (selectedCode) $("#pidList .sel")?.scrollIntoView({ block: "center" });
   $("#widgetDlg").showModal();
 }
 

@@ -137,3 +137,20 @@ a.btnlink { text-decoration: none; border: 1px solid var(--line); border-radius:
 
 .status.tappable { cursor: pointer; color: var(--text); border: 1px solid var(--bad); border-radius: 999px; padding: 4px 10px; }
 @media (max-width: 560px) { .status.tappable #statusText { display: inline; } }
+
+select.pidselect { font-size: 16px; padding: 10px; }
+.pidmeta { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+.pidmeta label.radio { flex: 0 1 auto; font-size: 13px; color: var(--muted); }
+#pidNote:empty { display: none; }
+#pidNote { margin: 0; }
+.grid.alltable { display: block; }
+.grid.alltable > p { margin: 0 0 8px; }
+table.sensors { width: 100%; border-collapse: collapse; background: var(--panel); border: 1px solid var(--line);
+  border-radius: var(--radius); overflow: hidden; font-size: 15px; }
+table.sensors th { text-align: left; color: var(--muted); font-weight: 500; font-size: 13px; padding: 8px 12px;
+  background: var(--panel2); position: sticky; top: 0; }
+table.sensors td { padding: 7px 12px; border-top: 1px solid var(--line); }
+table.sensors .num { text-align: right; font-variant-numeric: tabular-nums; font-weight: 600; white-space: nowrap; }
+table.sensors td.num.muted { font-weight: 400; }
+table.sensors td:nth-child(3), table.sensors td:nth-child(4) { color: var(--muted); }
+@media (max-width: 560px) { table.sensors th:nth-child(4), table.sensors td:nth-child(4) { display: none; } }
