@@ -10,7 +10,7 @@ import random
 import time
 
 SIM_PIDS = ["04", "05", "06", "07", "0B", "0C", "0D", "0E", "0F", "10", "11",
-            "1F", "21", "2F", "31", "33", "42", "43", "44", "45", "46", "49", "4C", "5C", "5E"]
+            "14", "15", "16", "17", "1D", "1F", "21", "2F", "31", "33", "42", "43", "44", "45", "46", "49", "4C", "5C", "5E"]
 
 
 class SimulatedCar:
@@ -68,6 +68,12 @@ class SimulatedCar:
             "0F": [_u8(28 + 40)],
             "10": _u16(maf * 100),
             "11": [_u8((14 + self.throttle * 0.8) * 2.55)],
+            # O2 sensors like a V8 with 4: upstream ones switch, downstream ones stay steady
+            "14": [_u8(random.choice((0.15, 0.8)) * 200 + random.uniform(-10, 10)), 128],
+            "15": [_u8(0.65 * 200 + random.uniform(-6, 6)), 255],
+            "16": [_u8(random.choice((0.15, 0.8)) * 200 + random.uniform(-10, 10)), 128],
+            "17": [_u8(0.62 * 200 + random.uniform(-6, 6)), 255],
+            "1D": [0x0F],   # bank 1 sensors 1-2, bank 2 sensors 1-2
             "1F": _u16(self.runtime),
             "21": _u16(0),
             "2F": [_u8(self.fuel * 2.55)],

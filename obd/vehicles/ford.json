@@ -1,10 +1,13 @@
 {
   "make": "Ford",
-  "about": "Ford enhanced (mode 22) sensors for CAN-bus vehicles (roughly 2008 and newer). Gathered from community lists (FORScan / Torque users). None are confirmed on Mark's car yet; addresses and formulas can differ by model, year and transmission. Check each with the test console before trusting it. Headers: 7E0 = engine (PCM), 7E1 = transmission (TCM), 726 = body (BCM).",
+  "about": "Ford enhanced (mode 22) sensors for CAN-bus vehicles (S197 Mustang from 2005, most models by 2008). Gathered from community lists (FORScan / Torque users). None are confirmed on Mark's car yet; addresses and formulas can differ by model, year and transmission. Check each with the test console before trusting it. Headers: 7E0 = engine (PCM), 7E1 = transmission (TCM), 726 = body (BCM).",
   "sensors": [
     {"code": "ford_tft", "name": "Transmission fluid temp", "unit": "°C", "min": -40, "max": 150,
      "header": "7E1", "cmd": "221E1C", "formula": "signed16(A*256+B)/16", "category": "Transmission",
      "verified": false, "note": "Most widely shared Ford PID (6R80, 6F35, 6F50/55, 10R80). Fairly reliable."},
+    {"code": "ford_tft_pcm", "name": "Transmission fluid temp (PCM)", "unit": "°C", "min": -40, "max": 150,
+     "header": "7E0", "cmd": "221E1C", "formula": "signed16(A*256+B)/16", "category": "Transmission",
+     "verified": false, "note": "For Fords whose engine computer also runs the automatic gearbox, e.g. 2005-2010 Mustang with the 5R55S. Same request as above, sent to the engine module. Unconfirmed. Manual gearboxes have no fluid temp sensor."},
     {"code": "ford_gear", "name": "Current gear", "unit": "", "min": 0, "max": 10,
      "header": "7E1", "cmd": "221E12", "formula": "A", "category": "Transmission",
      "verified": false, "note": "Guess: commonly listed, but the value encoding differs between transmissions."},

@@ -132,6 +132,7 @@ function onStatus(s) {
   el.title = s.message || "";
   $("#footer").textContent = s.message || "";
   if (s.supported) state.supported = new Set(s.supported);
+  if (s.o2) { state.o2 = s.o2; nameO2Sensors(); }
   if (s.state === "connected") { renderGrid(); if (state.active === ALL) subscribe(); }
   if (s.config) { fillSourceForm(s.config); setRecording(!!s.config.recording); }
   el.classList.toggle("tappable", !!s.needsTap || s.state === "error");
@@ -610,6 +611,16 @@ $("#dtcBtn").onclick = async () => {
   } catch (e) { out.textContent = "Couldn’t read codes: " + e.message; }
 };
 
+// "O2 sensor 3 voltage" -> "O2 bank 2 sensor 1 voltage (#3)", from the car's own layout (PID 13/1D).
+function nameO2Sensors(positions = state.o2 || {}) {
+  for (const p of Object.values(state.pids)) {
+    if (p.make !== "Standard") continue;
+    p.baseName ??= p.name;
+    const m = p.baseName.match(/^O2 sensor (\d) (.*)$/);
+    if (m && positions[m[1]]) p.name = `O2 ${positions[m[1]]} ${m[2]} (#${m[1]})`;
+  }
+}
+
 $("#misfireBtn").onclick = async () => {
   const out = $("#misfireOut");
   out.textContent = "Reading…";
@@ -642,6 +653,7 @@ async function reloadPids() {
   const pids = await (await fetch("api/pids")).json();
   state.pids = {};
   for (const p of pids) state.pids[p.code] = p;
+  nameO2Sensors();
 }
 
 function renderCustomList() {

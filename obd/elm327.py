@@ -65,6 +65,7 @@ class Elm327:
         self.supported: set[str] = set()
         self.version = ""
         self.protocol = ""
+        self.o2_positions: dict[int, str] = {}   # sensor number 1-8 -> "bank 1 sensor 2"
 
     async def connect(self):
         await self.t.open()
@@ -75,6 +76,7 @@ class Elm327:
         # First real query makes the adapter search for the car's protocol;
         # that can take several seconds.
         await self.detect_supported()
+        await self.detect_o2_layout()
         self.protocol = _clean(await self.t.send("ATDP"))
 
     async def close(self):
@@ -96,6 +98,20 @@ class Elm327:
                 break
             base = nxt
         log.info("Supported PIDs: %s", sorted(self.supported))
+
+    async def detect_o2_layout(self):
+        """Which O2 sensor number (PIDs 14-1B) is which bank/position, from PID 13 or 1D."""
+        self.o2_positions = {}
+        for pid, banks, per_bank in (("13", 2, 4), ("1D", 4, 2)):
+            if pid not in self.supported:
+                continue
+            data = await self.query_raw(pid)
+            if not data:
+                continue
+            for i in range(8):
+                if data[0] & (1 << i):
+                    self.o2_positions[i + 1] = f"bank {i // per_bank + 1} sensor {i % per_bank + 1}"
+            break
 
     async def set_header(self, header: str | None):
         """Pick which module answers: e.g. 7E1 = transmission. None = all (broadcast)."""

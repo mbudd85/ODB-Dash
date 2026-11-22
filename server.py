@@ -121,7 +121,7 @@ class Bridge:
                 await self.set_status(
                     state="connected", message=f"Connected to {where}",
                     version=self.elm.version, protocol=self.elm.protocol,
-                    supported=["RV"] + sorted(self.elm.supported))
+                    supported=["RV"] + sorted(self.elm.supported), o2=self.elm.o2_positions)
                 self.economy.reset()
                 await self.auto_start()
                 await self.set_status(**self.status)  # re-send so the REC button updates
