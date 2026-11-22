@@ -136,13 +136,31 @@ class Bridge:
                 await self.set_status(state="error", message=f"{where}: {e or type(e).__name__}. Retrying in 5 s.")
                 await asyncio.sleep(5)
 
+    SLOW_EVERY = 5   # slow-changing sensors (temperatures, fuel level, factory PIDs) are read every 5th pass
+
+    def is_slow(self, code: str) -> bool:
+        if code in economy.CODES:
+            return False
+        sn = self.registry.get(code)
+        if sn is None:
+            return True                       # adapter voltage
+        if not sn.standard:
+            return True
+        return (sn.unit == "°C" or sn.category in ("Diagnostics", "Electrical")
+                or sn.code in ("1F", "2F", "33", "52", "A6", "07", "09"))
+
     async def poll(self):
         failures = 0
+        cycle = 0
         while True:
             codes = self.wanted()
             if not codes:
                 await asyncio.sleep(0.2)
                 continue
+            cycle += 1
+            if cycle % self.SLOW_EVERY:
+                fast = [c for c in codes if not self.is_slow(c)]
+                codes = fast or codes
             calc = [c for c in codes if c in economy.CODES]
             if calc:  # poll what the MPG calculation needs, once each
                 codes = sorted((set(codes) - set(economy.CODES)) | set(economy.needed(self.elm.supported, calc)))
