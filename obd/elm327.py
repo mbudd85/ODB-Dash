@@ -206,6 +206,14 @@ class Elm327:
         return parse_dtcs(reply)
 
 
+    async def read_module_dtcs(self, header: str) -> list[dict] | None:
+        """Trouble codes stored in another module (UDS service 19 = read only), e.g. the body
+        module (726 on Fords), which logs burned-out bulbs. None = module didn't answer."""
+        async with self.io:
+            await self.set_header(header)
+            reply = await self.t.send("19020D", timeout=5)   # status: failed now / pending / confirmed
+        return parse_uds_dtcs(reply)
+
     async def read_misfires(self) -> dict:
         """Per-cylinder misfire counts from the misfire monitor (mode 06, CAN cars). Read-only.
 
@@ -247,6 +255,32 @@ def parse_multi(reply: str, sensors: dict) -> dict[str, float | None]:
         except (ZeroDivisionError, OverflowError, ValueError):
             out[s.code] = None
         i += 1 + s.nbytes
+    return out
+
+
+FAILURE_TYPES = {
+    0x00: "", 0x01: "general electrical failure", 0x11: "short to ground", 0x12: "short to battery",
+    0x13: "open circuit (often a burned-out bulb or broken wire)", 0x14: "short to ground or open",
+    0x15: "short to battery or open", 0x16: "voltage too low", 0x17: "voltage too high",
+    0x19: "current too high", 0x1A: "resistance too low", 0x1B: "resistance too high",
+    0x1E: "out of range", 0x4B: "over temperature", 0x92: "performance or incorrect operation",
+    0x96: "component internal failure",
+}
+
+
+def parse_uds_dtcs(reply: str) -> list[dict] | None:
+    """'59 02 <mask> [DTC hi, DTC lo, failure type, status] ...' -> list of codes."""
+    data = parse_reply(reply, "5902")
+    if data is None:
+        return None
+    out = []
+    for i in range(1, len(data) - 3, 4):
+        hi, lo, ftb, status = data[i:i + 4]
+        if not (hi or lo):
+            continue
+        code = "PCBU"[hi >> 6] + f"{(hi & 0x3F) >> 4:X}{hi & 0x0F:X}{lo:02X}"
+        out.append({"code": code, "type": f"{ftb:02X}", "meaning": FAILURE_TYPES.get(ftb, ""),
+                    "active": bool(status & 0x01), "confirmed": bool(status & 0x08)})
     return out
 
 

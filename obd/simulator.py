@@ -149,6 +149,10 @@ class SimTransport:
             vals = self.car.values()
             parts = [p + "".join(f"{b:02X}" for b in vals[p]) for p in (cmd[i:i + 2] for i in range(2, len(cmd), 2)) if p in vals]
             return ("41" + "".join(parts) + "\r\r") if parts else "NO DATA\r\r"
+        if cmd == "19020D":
+            if self.header == "726":   # pretend body module: right rear stop lamp open circuit
+                return "5902FF90E31309\r\r"
+            return "NO DATA\r\r"
         if cmd.startswith("22"):
             return self._enhanced(cmd[2:])
         if cmd == "06A0":

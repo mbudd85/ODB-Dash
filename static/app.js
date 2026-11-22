@@ -590,6 +590,7 @@ $("#menuBtn").onclick = () => {
   $("#dtcOut").textContent = "";
   $("#misfireOut").textContent = "";
   $("#probeOut").textContent = "";
+  $("#bodyDtcOut").textContent = "";
   loadVehicles();
   renderTrips();
   showLocationHelp();
@@ -667,6 +668,24 @@ $("#probeBtn").onclick = async () => {
       : `None of the ${total} factory sensors answered. The standard sensors still work.`;
     renderGrid();
   } catch (e) { out.textContent = "Couldn’t check: " + e.message; }
+};
+
+$("#bodyDtcBtn").onclick = async () => {
+  const out = $("#bodyDtcOut");
+  out.textContent = "Asking the body module…";
+  try {
+    const r = await fetch("api/module-dtcs?module=body");
+    if (!r.ok) throw new Error(await r.text());
+    const { answered, codes } = await r.json();
+    if (!answered) {
+      out.textContent = "The body module didn’t answer. On older cars (like a 2007 Mustang or 2012 Mazda 6) it isn’t reachable from the OBD port, or doesn’t watch the bulbs.";
+      return;
+    }
+    out.innerHTML = codes.length
+      ? codes.map((c) => `<div><code>${c.code}-${c.type}</code> ${c.meaning}${c.active ? " · <b>happening now</b>" : ""}</div>`).join("")
+        + `<p class="muted small">Look the code up for your vehicle to see which lamp it is. Codes ending in -13 (open circuit) usually mean a bulb is out. Lamps are only checked while they're switched on, so turn on the lights, press the brake and use each signal first.</p>`
+      : "No body module codes stored. Lamps are only checked while they’re on, so switch on the lights, press the brake and use each signal, then check again.";
+  } catch (e) { out.textContent = "Couldn’t read: " + e.message; }
 };
 
 $("#misfireBtn").onclick = async () => {

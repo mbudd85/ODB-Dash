@@ -126,3 +126,14 @@ class MultiPidTests(unittest.TestCase):
         self.assertTrue(can)
         self.assertEqual(len(vals), 7)
         self.assertTrue(all(v is not None for v in vals.values()), vals)
+
+
+class UdsDtcTests(unittest.TestCase):
+    def test_parse(self):
+        from obd.elm327 import parse_uds_dtcs
+        codes = parse_uds_dtcs("5902FF90E31309\r\r")
+        self.assertEqual(codes[0]["code"], "B10E3")
+        self.assertEqual(codes[0]["type"], "13")
+        self.assertTrue(codes[0]["active"] and codes[0]["confirmed"])
+        self.assertIsNone(parse_uds_dtcs("NO DATA\r\r"))
+        self.assertEqual(parse_uds_dtcs("5902FF\r\r"), [])

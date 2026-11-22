@@ -381,6 +381,20 @@ async def post_probe(request):
     return web.json_response({"checked": results})
 
 
+MODULES = {"body": "726"}
+
+
+async def get_module_dtcs(request):
+    bridge: Bridge = request.app["bridge"]
+    if bridge.status.get("state") != "connected":
+        raise web.HTTPServiceUnavailable(text="Not connected to the adapter")
+    header = MODULES.get(request.query.get("module", "body"))
+    if not header:
+        raise web.HTTPBadRequest(text="unknown module")
+    codes = await bridge.elm.read_module_dtcs(header)
+    return web.json_response({"answered": codes is not None, "codes": codes or []})
+
+
 async def get_config(request):
     return web.json_response(request.app["bridge"].config())
 
@@ -436,6 +450,7 @@ def make_app(bridge: Bridge) -> web.Application:
     app.router.add_put("/api/dashboards", put_dashboards)
     app.router.add_get("/api/dtcs", get_dtcs)
     app.router.add_get("/api/misfires", get_misfires)
+    app.router.add_get("/api/module-dtcs", get_module_dtcs)
     app.router.add_get("/api/config", get_config)
     app.router.add_get("/api/vehicles", get_vehicles)
     app.router.add_put("/api/vehicle", put_vehicle)
