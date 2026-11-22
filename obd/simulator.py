@@ -137,6 +137,13 @@ class SimTransport:
             return "OK\r\r"
         if cmd.startswith("22"):
             return self._enhanced(cmd[2:])
+        if cmd == "06A0":
+            return "46A0F8000000\r\r"   # misfire monitor: all + cylinders 1-4
+        if cmd.startswith("06A") and len(cmd) == 4 and cmd[3] in "12345":
+            mid = int(cmd[2:], 16)
+            cyl = mid - 0xA1
+            now, avg = {0: (5, 2), 3: (4, 2)}.get(cyl, (0, 0))   # cylinder 3 misfires a little
+            return "46" + "".join(f"{mid:02X}{tid:02X}24{v:04X}0000FFFF" for tid, v in ((0x0B, avg), (0x0C, now))) + "\r\r"
         if cmd == "03":
             return "43010133\r\r"  # one stored code: P0133 (O2 sensor slow response)
         if cmd.startswith("01") and len(cmd) == 4:

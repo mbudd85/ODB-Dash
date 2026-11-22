@@ -148,6 +148,45 @@ class Elm327:
         return parse_dtcs(reply)
 
 
+    async def read_misfires(self) -> dict:
+        """Per-cylinder misfire counts from the misfire monitor (mode 06, CAN cars). Read-only.
+
+        Monitor IDs: A1 = all cylinders, A2..AD = cylinder 1..12. Test 0B = average
+        misfires over the last 10 drive cycles, 0C = misfires this (or the last) drive cycle.
+        """
+        async with self.io:
+            await self.set_header(None)
+            mask = parse_reply(await self.t.send("06A0", timeout=10), "46A0")
+        if not mask or len(mask) < 4:
+            return {"supported": False, "cylinders": []}
+        bits = int.from_bytes(bytes(mask[:4]), "big")
+        mids = [0xA1 + i for i in range(32) if bits & (1 << (31 - i)) and 0xA1 + i <= 0xAD]
+        out = {"supported": True, "total": None, "cylinders": []}
+        for mid in mids:
+            async with self.io:
+                await self.set_header(None)
+                reply = await self.t.send(f"06{mid:02X}", timeout=5)
+            tests = parse_mode06(reply, mid)
+            row = {"this_drive": tests.get(0x0C), "avg_last_10": tests.get(0x0B)}
+            if mid == 0xA1:
+                out["total"] = row
+            else:
+                out["cylinders"].append({"cyl": mid - 0xA1, **row})
+        return out
+
+
+def parse_mode06(reply: str, mid: int) -> dict[int, int]:
+    """CAN mode 06 reply -> {test id: value}. Records are MID TID UNIT VALUE(2) MIN(2) MAX(2)."""
+    data = parse_reply(reply, "46")
+    tests = {}
+    i = 0
+    while data and i + 9 <= len(data):
+        if data[i] == mid:
+            tests[data[i + 1]] = data[i + 3] << 8 | data[i + 4]
+        i += 9
+    return tests
+
+
 def _clean(text: str) -> str:
     return " ".join(line.strip() for line in text.replace("\n", "\r").split("\r") if line.strip())
 

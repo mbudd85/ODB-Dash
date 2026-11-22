@@ -578,6 +578,7 @@ function fillSourceForm(cfg) {
 $("#menuBtn").onclick = () => {
   document.querySelectorAll("input[name=units]").forEach((r) => (r.checked = r.value === state.units));
   $("#dtcOut").textContent = "";
+  $("#misfireOut").textContent = "";
   renderTrips();
   showLocationHelp();
   loadCustom().then(renderCustomList);
@@ -607,6 +608,25 @@ $("#dtcBtn").onclick = async () => {
       ? codes.map((c) => `<code>${c}</code>`).join("") + ` <span class="muted small">Look these up for your make/model.</span>`
       : "No stored trouble codes.";
   } catch (e) { out.textContent = "Couldn’t read codes: " + e.message; }
+};
+
+$("#misfireBtn").onclick = async () => {
+  const out = $("#misfireOut");
+  out.textContent = "Reading…";
+  try {
+    const r = await fetch("api/misfires");
+    if (!r.ok) throw new Error(await r.text());
+    const m = await r.json();
+    if (!m.supported || !m.cylinders.length) {
+      out.textContent = "This car doesn’t report misfires per cylinder over OBD2 (or the monitor hasn’t run yet).";
+      return;
+    }
+    const n = (v) => (v == null ? "–" : v);
+    const rows = m.cylinders.map((c) => `<tr${c.this_drive || c.avg_last_10 ? ' class="warn"' : ""}><td>Cylinder ${c.cyl}</td><td>${n(c.this_drive)}</td><td>${n(c.avg_last_10)}</td></tr>`);
+    if (m.total) rows.push(`<tr><td><b>All</b></td><td>${n(m.total.this_drive)}</td><td>${n(m.total.avg_last_10)}</td></tr>`);
+    out.innerHTML = `<table class="sensors"><tr><th></th><th>This drive</th><th>Avg, last 10 drives</th></tr>${rows.join("")}</table>
+      <p class="muted small">Counts reset when codes are cleared or the battery is disconnected. The car fills these in as it drives.</p>`;
+  } catch (e) { out.textContent = "Couldn’t read misfires: " + e.message; }
 };
 
 // ---------------------------------------------------------------- custom sensors + test console

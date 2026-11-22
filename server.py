@@ -320,6 +320,13 @@ async def get_dtcs(request):
     return web.json_response({"codes": await bridge.elm.read_dtcs()})
 
 
+async def get_misfires(request):
+    bridge: Bridge = request.app["bridge"]
+    if bridge.status.get("state") != "connected":
+        raise web.HTTPServiceUnavailable(text="Not connected to the adapter")
+    return web.json_response(await bridge.elm.read_misfires())
+
+
 async def get_config(request):
     return web.json_response(request.app["bridge"].config())
 
@@ -374,6 +381,7 @@ def make_app(bridge: Bridge) -> web.Application:
     app.router.add_get("/api/dashboards", get_dashboards)
     app.router.add_put("/api/dashboards", put_dashboards)
     app.router.add_get("/api/dtcs", get_dtcs)
+    app.router.add_get("/api/misfires", get_misfires)
     app.router.add_get("/api/config", get_config)
     app.router.add_post("/api/config", post_config)
     app.router.add_post("/api/connect", post_connect)

@@ -158,3 +158,4 @@ table.sensors td:nth-child(3), table.sensors td:nth-child(4) { color: var(--mute
 .askmsg { margin: 0; white-space: pre-line; font-size: 16px; }
 #askDlg { width: min(420px, calc(100vw - 32px)); }
 button.danger.primary { background: var(--bad); border-color: var(--bad); color: #fff; }
+.dtc tr.warn td { color: var(--warn, #f5a623); font-weight: 600; }

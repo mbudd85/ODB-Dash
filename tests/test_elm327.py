@@ -87,3 +87,22 @@ class EnhancedTests(unittest.IsolatedAsyncioTestCase):
     def test_negative_response(self):
         from obd.elm327 import parse_reply
         self.assertIsNone(parse_reply("7F2231\r", "621E1C"))
+
+
+class Mode06Tests(unittest.TestCase):
+    def test_parse_records(self):
+        from obd.elm327 import parse_mode06
+        reply = "46A40B2400020000FFFFA40C2400050000FFFF\r\r"
+        self.assertEqual(parse_mode06(reply, 0xA4), {0x0B: 2, 0x0C: 5})
+
+    def test_sim_misfires(self):
+        import asyncio
+        from obd.elm327 import Elm327
+        from obd.simulator import SimTransport
+        async def go():
+            elm = Elm327(SimTransport(latency=0))
+            return await elm.read_misfires()
+        m = asyncio.run(go())
+        self.assertEqual([c["cyl"] for c in m["cylinders"]], [1, 2, 3, 4])
+        self.assertEqual(m["cylinders"][2]["this_drive"], 4)
+        self.assertEqual(m["total"]["this_drive"], 5)
