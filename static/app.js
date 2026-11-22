@@ -164,6 +164,14 @@ function onData(msg) {
 
 // ---------------------------------------------------------------- rendering
 
+let lastFrame = performance.now();
+(function frame(now) {
+  const dt = Math.min(200, now - lastFrame);
+  lastFrame = now;
+  for (const w of state.widgets.values()) w.animate?.(dt);
+  requestAnimationFrame(frame);
+})(lastFrame);
+
 function renderTabs() {
   const tabs = $("#tabs");
   tabs.innerHTML = "";
@@ -239,8 +247,18 @@ function renderGrid() {
     grid.append(el);
     const body = el.querySelector(".body");
     const view = { gauge: makeGauge, number: makeNumber, graph: makeGraph }[w.type](body, w, info);
+    // Gauges and numbers glide to each new reading at screen rate (60 fps) instead of jumping.
+    const smooth = w.type !== "graph";
+    let shown = null, target = null;
     state.widgets.set(w.id, {
-      el, update() {
+      el,
+      animate(dt) {
+        if (!smooth || target == null || shown == null || shown === target) return;
+        shown += (target - shown) * (1 - Math.exp(-dt / 80));
+        if (Math.abs(target - shown) <= Math.abs(target) * 1e-4 + 1e-6) shown = target;
+        view(shown);
+      },
+      update() {
         const raw = state.latest[w.code];
         const warn = w.warn != null && w.warn !== "" && raw != null && unitFor(info).f(raw) > +w.warn;
         el.classList.toggle("warn", !!warn);
@@ -250,6 +268,8 @@ function renderGrid() {
           note.textContent = noReply ? (info.make === "Standard" ? "No data" : "No reply from the car") : "";
           el.classList.toggle("unsupported", noReply);
         }
+        if (smooth && raw != null && shown != null) { target = raw; return; }
+        shown = target = raw;
         view(raw);
       },
     });
