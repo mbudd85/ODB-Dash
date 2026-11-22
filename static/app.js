@@ -475,6 +475,30 @@ $("#widgetDlg").addEventListener("close", () => {
   save(); renderGrid(); subscribe();
 });
 
+// In-page replacement for confirm()/prompt()/alert(). Some browsers and embedded
+// views block those pop-ups silently (confirm() then just returns false).
+function ask(message, { input = null, ok = "OK", cancel = "Cancel", danger = false } = {}) {
+  return new Promise((resolve) => {
+    const dlg = $("#askDlg");
+    $("#askMsg").textContent = message;
+    const field = $("#askInput");
+    field.hidden = input === null;
+    field.value = input ?? "";
+    $("#askOk").textContent = ok;
+    $("#askOk").className = danger ? "danger primary" : "primary";
+    $("#askCancel").hidden = cancel === null;
+    $("#askCancel").textContent = cancel || "";
+    dlg.onclose = () => {
+      const yes = dlg.returnValue === "ok";
+      resolve(input !== null ? (yes ? field.value.trim() || null : null) : yes);
+    };
+    dlg.returnValue = "";
+    dlg.showModal();
+    if (input !== null) { field.focus(); field.select(); }
+  });
+}
+const tell = (message) => ask(message, { cancel: null });
+
 // ---------------------------------------------------------------- dashboards / edit mode
 
 function setEditing(on) {
@@ -484,8 +508,8 @@ function setEditing(on) {
   renderGrid();
 }
 
-function newDashboard() {
-  const name = prompt("Dashboard name", "My dashboard");
+async function newDashboard() {
+  const name = await ask("Name the new dashboard", { input: "My dashboard", ok: "Create" });
   if (!name) return;
   const d = { id: uid(), name, widgets: [] };
   state.dashboards.push(d);
@@ -505,30 +529,31 @@ $("#editBtn").onclick = () => setEditing(!state.editing);
 $("#doneBtn").onclick = () => setEditing(false);
 $("#addWidgetBtn").onclick = () => openWidgetDialog();
 // Add every sensor the car reports that isn't on this dashboard yet, as number tiles.
-$("#addAllBtn").onclick = () => {
+$("#addAllBtn").onclick = async () => {
   const dash = activeDash();
   const have = new Set(dash.widgets.map((w) => w.code));
   const add = allCodes().filter((c) => !have.has(c)).map((c) => state.pids[c]).filter(Boolean)
     .sort((a, b) => (a.make === "Standard" ? 0 : 1) - (b.make === "Standard" ? 0 : 1)
       || a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
-  if (!add.length) return alert("Every available sensor is already on this dashboard.");
+  if (!add.length) return tell("Every available sensor is already on this dashboard.");
   const note = state.supported ? "" : "\n\n(Not connected yet, so this is every sensor the app knows.)";
-  if (!confirm(`Add ${add.length} sensors to “${dash.name}”?${note}`)) return;
+  if (!(await ask(`Add ${add.length} sensors to “${dash.name}”?${note}`, { ok: `Add ${add.length}` }))) return;
   for (const p of add) dash.widgets.push({ id: uid(), code: p.code, type: "number", size: 1, min: null, max: null, warn: null });
   save(); renderGrid(); subscribe();
 };
-$("#renameDashBtn").onclick = () => {
+$("#renameDashBtn").onclick = async () => {
   const d = activeDash();
-  const name = prompt("Rename dashboard", d.name);
+  const name = await ask("Rename dashboard", { input: d.name, ok: "Rename" });
   if (name) { d.name = name; save(); renderTabs(); }
 };
-$("#deleteDashBtn").onclick = () => {
-  if (state.dashboards.length === 1) return alert("You need at least one dashboard.");
-  if (!confirm(`Delete “${activeDash().name}”?`)) return;
+$("#deleteDashBtn").onclick = async () => {
+  if (state.dashboards.length === 1) return tell("You need at least one dashboard.");
+  if (!(await ask(`Delete “${activeDash().name}”?`, { ok: "Delete", danger: true }))) return;
   state.dashboards = state.dashboards.filter((d) => d.id !== state.active);
   save();
+  state.active = state.dashboards[0].id;   // before re-rendering, or it draws the deleted one
   setEditing(false);
-  switchDash(state.dashboards[0].id);
+  switchDash(state.active);
 };
 
 // ---------------------------------------------------------------- settings menu
@@ -606,7 +631,7 @@ function renderCustomList() {
     const [edit, del] = row.querySelectorAll("button");
     edit.onclick = () => openCustomDialog(c);
     del.onclick = async () => {
-      if (!confirm(`Delete “${c.name}”? It will disappear from your dashboards.`)) return;
+      if (!(await ask(`Delete “${c.name}”? It will disappear from your dashboards.`, { ok: "Delete", danger: true }))) return;
       customSensors = customSensors.filter((x) => x !== c);
       await saveCustom();
     };
@@ -768,7 +793,7 @@ async function renderTrips() {
     row.querySelector("small").textContent = `${len} · ${t.n.toLocaleString()} readings · ` +
       (t.n_gps ? `${t.n_gps.toLocaleString()} locations` : "no locations");
     row.querySelector("button").onclick = async () => {
-      if (!confirm(`Delete “${t.name}”?`)) return;
+      if (!(await ask(`Delete “${t.name}”?`, { ok: "Delete", danger: true }))) return;
       await fetch(`api/trips/${t.id}`, { method: "DELETE" });
       renderTrips();
     };

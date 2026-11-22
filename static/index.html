@@ -166,6 +166,18 @@
     </form>
   </dialog>
 
+  <!-- Confirm / name prompts (in-page, so blocked pop-ups can't break them) -->
+  <dialog id="askDlg">
+    <form method="dialog">
+      <p id="askMsg" class="askmsg"></p>
+      <input id="askInput" autocomplete="off" hidden>
+      <menu>
+        <button value="cancel" id="askCancel" formnovalidate>Cancel</button>
+        <button value="ok" id="askOk" class="primary">OK</button>
+      </menu>
+    </form>
+  </dialog>
+
   <script src="app.js"></script>
 </body>
 </html>
