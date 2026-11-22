@@ -344,8 +344,17 @@ async def index(request):
     return web.FileResponse(STATIC / "index.html")
 
 
+@web.middleware
+async def no_stale_files(request, handler):
+    """Make browsers re-check app files each load, so an update shows up without a hard reload."""
+    resp = await handler(request)
+    if not request.path.startswith(("/api/", "/ws")):
+        resp.headers.setdefault("Cache-Control", "no-cache")
+    return resp
+
+
 def make_app(bridge: Bridge) -> web.Application:
-    app = web.Application()
+    app = web.Application(middlewares=[no_stale_files])
     app["bridge"] = bridge
     app["db"] = bridge.db
     app.router.add_get("/", index)
