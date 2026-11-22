@@ -1,6 +1,2 @@
 @echo off
-cd /d "%~dp0"
-REM Prefer the Python launcher (newest installed Python), fall back to "python".
-where py >nul 2>nul
-if %errorlevel%==0 (py -3 server.py --iphone --sim %*) else (python server.py --iphone --sim %*)
-pause
+call "%~dp0start.bat" --iphone --sim %*
