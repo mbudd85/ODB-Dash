@@ -20,6 +20,8 @@ if not defined PY (
   pause
   exit /b 1
 )
+REM Stop an OBD Dash that's already running (it would hold port 8080).
+powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^(py|python)[0-9.]*w?\.exe$' -and $_.CommandLine -match 'server\.py' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>nul
 echo Starting OBD Dash with %PY% ...
 %PY% server.py %*
 pause
