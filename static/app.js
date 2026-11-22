@@ -27,7 +27,13 @@ const CONVERSIONS = {
   "kPa": ["psi", (v) => v * 0.145038],
   "L/h": ["gal/h", (v) => v * 0.264172],
 };
+// Sensors whose native unit is imperial, converted for metric display.
+const METRIC_CONVERSIONS = {
+  "mpg": ["L/100km", (v) => (v > 0 ? Math.min(99.9, 235.215 / v) : 0)],
+};
 function unitFor(info) {
+  const m = state.units === "metric" && METRIC_CONVERSIONS[info.unit];
+  if (m) return { unit: m[0], f: m[1] };
   const c = state.units === "imperial" && CONVERSIONS[info.unit];
   return c ? { unit: c[0], f: c[1] } : { unit: info.unit, f: (v) => v };
 }

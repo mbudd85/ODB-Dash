@@ -36,3 +36,34 @@ class FormulaTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class EconomyTests(unittest.TestCase):
+    def test_instant_and_average(self):
+        from obd.economy import FuelEconomy, INSTANT, AVERAGE
+        e = FuelEconomy()
+        # 96.56 km/h (60 mph) burning 7.57 L/h (2 gal/h) = 30 mpg
+        e.update({"0D": 96.56, "5E": 7.5708}, t=0)
+        out = e.update({"0D": 96.56, "5E": 7.5708}, t=1)
+        self.assertAlmostEqual(out[INSTANT], 30.0, delta=0.2)
+        self.assertAlmostEqual(out[AVERAGE], 30.0, delta=0.2)
+        self.assertEqual(e.update({"0D": 0, "5E": 0.8}, t=2)[INSTANT], 0.0)
+
+    def test_maf_fallback(self):
+        from obd.economy import fuel_lph
+        self.assertAlmostEqual(fuel_lph({"10": 10.0}), 3.323, places=2)
+        self.assertIsNone(fuel_lph({}))
+
+
+class PowerTests(unittest.TestCase):
+    def test_from_torque_pids(self):
+        from obd.economy import estimate_power
+        hp, lbft = estimate_power({"0C": 5252 * 1.0, "62": 100, "63": 271.16})   # 200 lb-ft at 5252 rpm = 200 hp
+        self.assertAlmostEqual(hp, 200, delta=1)
+        self.assertAlmostEqual(lbft, 200, delta=1)
+
+    def test_from_maf(self):
+        from obd.economy import estimate_power
+        hp, _ = estimate_power({"0C": 3000, "10": 100})
+        self.assertTrue(90 < hp < 130, hp)
+        self.assertEqual(estimate_power({"10": 100}), (None, None))

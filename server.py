@@ -18,6 +18,7 @@ from pathlib import Path
 
 from aiohttp import web, WSMsgType
 
+from obd import economy
 from obd.db import Database
 from obd.elm327 import Elm327, TcpTransport
 from obd.formula import FormulaError
@@ -48,6 +49,7 @@ class Bridge:
         self.auto_record = False
         self.auto_trip = False          # True while a trip was started by auto-record
         self.gps = None                 # GpsdClient when --gps is on
+        self.economy = economy.FuelEconomy()
 
     def config(self) -> dict:
         return {"mode": self.mode, "host": self.host, "port": self.port,
@@ -66,6 +68,7 @@ class Bridge:
         if self.auto_record and not self.db.recording:
             self.record_codes = self.dashboard_codes() or {"0C", "0D", "05", "RV"}
             self.db.start_trip()
+            self.economy.reset()
             self.auto_trip = True
             log.info("Auto-record: trip started")
 
@@ -119,6 +122,7 @@ class Bridge:
                     state="connected", message=f"Connected to {where}",
                     version=self.elm.version, protocol=self.elm.protocol,
                     supported=["RV"] + sorted(self.elm.supported))
+                self.economy.reset()
                 await self.auto_start()
                 await self.set_status(**self.status)  # re-send so the REC button updates
                 await self.poll()
@@ -139,6 +143,9 @@ class Bridge:
             if not codes:
                 await asyncio.sleep(0.2)
                 continue
+            calc = [c for c in codes if c in economy.CODES]
+            if calc:  # poll what the MPG calculation needs, once each
+                codes = sorted((set(codes) - set(economy.CODES)) | set(economy.needed(self.elm.supported, calc)))
             start = time.monotonic()
             values = {}
             for code in codes:
@@ -157,6 +164,10 @@ class Bridge:
                         raise ConnectionError("adapter stopped responding")
             elapsed = time.monotonic() - start
             self.rate = len(codes) / elapsed if elapsed else 0
+            if calc:
+                derived = self.economy.update(values)
+                derived[economy.HP], derived[economy.TORQUE] = economy.estimate_power(values, self.elm.supported)
+                values.update({c: v for c, v in derived.items() if c in calc})
             now = time.time()
             self.db.log(now, values)
             await self.broadcast({"type": "data", "values": values, "t": now,
@@ -192,7 +203,7 @@ async def ws_handler(request):
 
 
 async def get_pids(request):
-    return web.json_response(request.app["bridge"].registry.catalog())
+    return web.json_response(request.app["bridge"].registry.catalog() + economy.CATALOG)
 
 
 async def get_custom(request):
