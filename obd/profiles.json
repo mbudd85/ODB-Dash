@@ -1,0 +1,10 @@
+[
+  {"id": "expedition17", "name": "2017 Ford Expedition EL Limited", "make": "Ford",
+   "about": "3.5 EcoBoost, 6R80 6-speed automatic (separate transmission module, 7E1)."},
+  {"id": "f150_16", "name": "2016 Ford F-150 Platinum", "make": "Ford",
+   "about": "3.5 EcoBoost or 5.0 V8, 6R80 6-speed automatic (7E1). EcoBoost-only sensors give no reply on a 5.0."},
+  {"id": "mustang07", "name": "2007 Ford Mustang GT", "make": "Ford",
+   "about": "4.6 3V V8. The automatic (5R55S) is run by the engine computer (7E0); manual cars have no transmission sensors. Older Ford computer, so far fewer factory sensors."},
+  {"id": "mazda6_12", "name": "2012 Mazda 6", "make": "Mazda",
+   "about": "2.5 MZR or 3.7 V6, pre-Skyactiv. Mazda publishes almost nothing, so factory sensors are few."}
+]

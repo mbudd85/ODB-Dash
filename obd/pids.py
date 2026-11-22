@@ -33,6 +33,7 @@ class Sensor:
     make: str = "Standard"
     verified: bool = True
     note: str = ""
+    fits: list | None = None        # vehicle profile ids this is known/expected to work on
     decode: object = field(default=None, repr=False, compare=False)
 
     def __post_init__(self):

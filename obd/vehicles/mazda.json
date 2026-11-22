@@ -4,9 +4,9 @@
   "sensors": [
     {"code": "mazda_atf_temp", "name": "Transmission fluid temp", "unit": "°C", "min": -40, "max": 150,
      "header": "7E1", "cmd": "221E1C", "formula": "signed16(A*256+B)/16", "category": "Transmission",
-     "verified": false, "note": "Guess: same address as Ford. Works on some Ford-shared Mazdas; Skyactiv-Drive cars may use a different one."},
+     "verified": false, "fits": ["mazda6_12"], "note": "Guess: same address as Ford. 2009-2013 Mazda 6 shares a lot with Ford. Works on some Ford-shared Mazdas; Skyactiv-Drive cars may use a different one."},
     {"code": "mazda_atf_temp_alt", "name": "Transmission fluid temp (alt.)", "unit": "°C", "min": -40, "max": 150,
      "header": "7E1", "cmd": "2217B6", "formula": "A-40", "category": "Transmission",
-     "verified": false, "note": "Guess: alternative address reported by some Skyactiv owners."}
+     "verified": false, "fits": [], "note": "Guess: alternative address reported by some Skyactiv owners (2014+). Not expected on a 2012 Mazda 6."}
   ]
 }

@@ -65,6 +65,9 @@ class Elm327:
         self.supported: set[str] = set()
         self.version = ""
         self.protocol = ""
+        self.o2_positions: dict[int, str] = {}   # sensor number 1-8 -> "bank 1 sensor 2"
+        self.can = False        # CAN (11 or 29 bit): allows the fast paths below
+        self.multi_ok = True    # engine computer answers several PIDs in one request
 
     async def connect(self):
         await self.t.open()
@@ -75,7 +78,11 @@ class Elm327:
         # First real query makes the adapter search for the car's protocol;
         # that can take several seconds.
         await self.detect_supported()
+        await self.detect_o2_layout()
         self.protocol = _clean(await self.t.send("ATDP"))
+        self.can = _clean(await self.t.send("ATDPN"))[-1:] in ("6", "7", "8", "9")
+        if self.can:
+            await self.t.send("ATAT2")   # adaptive timing, aggressive: don't wait long after the reply
 
     async def close(self):
         await self.t.close()
@@ -96,6 +103,20 @@ class Elm327:
                 break
             base = nxt
         log.info("Supported PIDs: %s", sorted(self.supported))
+
+    async def detect_o2_layout(self):
+        """Which O2 sensor number (PIDs 14-1B) is which bank/position, from PID 13 or 1D."""
+        self.o2_positions = {}
+        for pid, banks, per_bank in (("13", 2, 4), ("1D", 4, 2)):
+            if pid not in self.supported:
+                continue
+            data = await self.query_raw(pid)
+            if not data:
+                continue
+            for i in range(8):
+                if data[0] & (1 << i):
+                    self.o2_positions[i + 1] = f"bank {i // per_bank + 1} sensor {i % per_bank + 1}"
+            break
 
     async def set_header(self, header: str | None):
         """Pick which module answers: e.g. 7E1 = transmission. None = all (broadcast)."""
@@ -123,9 +144,15 @@ class Elm327:
         return await self.read_sensor(sensor)
 
     async def read_sensor(self, sensor: Sensor) -> float | None:
+        cmd, header = sensor.cmd, sensor.header
+        if self.can:
+            if sensor.standard:
+                header = "7E0"   # ask only the engine computer, so one reply
+            if len(cmd) // 2 + sensor.nbytes <= 7:
+                cmd += "1"       # "expect 1 reply": the adapter returns at once instead of waiting
         async with self.io:
-            await self.set_header(sensor.header)
-            reply = await self.t.send(sensor.cmd)
+            await self.set_header(header)
+            reply = await self.t.send(cmd)
         data = parse_reply(reply, sensor.reply_prefix)
         if not data or len(data) < sensor.nbytes:
             return None
@@ -133,6 +160,37 @@ class Elm327:
             return round(sensor.decode(data), 3)
         except (ZeroDivisionError, OverflowError, ValueError):
             return None
+
+    async def read_standard(self, codes: list[str]) -> dict[str, float | None]:
+        """Several mode 01 PIDs, up to 6 per request on CAN cars (much faster than one by one)."""
+        sensors = [self.registry.get(c) for c in codes]
+        sensors = [s for s in sensors if s]
+        out: dict[str, float | None] = {}
+        if not (self.can and self.multi_ok):
+            for s in sensors:
+                out[s.code] = await self.read_sensor(s)
+            return out
+        for i in range(0, len(sensors), 6):
+            group = sensors[i:i + 6]
+            if len(group) == 1:
+                out[group[0].code] = await self.read_sensor(group[0])
+                continue
+            size = 1 + sum(1 + s.nbytes for s in group)
+            frames = 1 if size <= 7 else 1 + -(-(size - 6) // 7)
+            cmd = "01" + "".join(s.code for s in group) + (f"{frames:X}" if frames <= 15 else "")
+            async with self.io:
+                await self.set_header("7E0")
+                reply = await self.t.send(cmd)
+            got = parse_multi(reply, {s.code: s for s in group})
+            if not got:
+                log.info("Multi-PID requests not answered; reading one at a time")
+                self.multi_ok = False
+                for s in group:
+                    out[s.code] = await self.read_sensor(s)
+                continue
+            for s in group:
+                out[s.code] = got.get(s.code)
+        return out
 
     async def raw(self, cmd: str, header: str | None = None) -> str:
         """Test console: send any read-only command and return the raw reply."""
@@ -146,6 +204,96 @@ class Elm327:
             await self.set_header(None)
             reply = _clean(await self.t.send("03", timeout=10))
         return parse_dtcs(reply)
+
+
+    async def read_module_dtcs(self, header: str) -> list[dict] | None:
+        """Trouble codes stored in another module (UDS service 19 = read only), e.g. the body
+        module (726 on Fords), which logs burned-out bulbs. None = module didn't answer."""
+        async with self.io:
+            await self.set_header(header)
+            reply = await self.t.send("19020D", timeout=5)   # status: failed now / pending / confirmed
+        return parse_uds_dtcs(reply)
+
+    async def read_misfires(self) -> dict:
+        """Per-cylinder misfire counts from the misfire monitor (mode 06, CAN cars). Read-only.
+
+        Monitor IDs: A1 = all cylinders, A2..AD = cylinder 1..12. Test 0B = average
+        misfires over the last 10 drive cycles, 0C = misfires this (or the last) drive cycle.
+        """
+        async with self.io:
+            await self.set_header(None)
+            mask = parse_reply(await self.t.send("06A0", timeout=10), "46A0")
+        if not mask or len(mask) < 4:
+            return {"supported": False, "cylinders": []}
+        bits = int.from_bytes(bytes(mask[:4]), "big")
+        mids = [0xA1 + i for i in range(32) if bits & (1 << (31 - i)) and 0xA1 + i <= 0xAD]
+        out = {"supported": True, "total": None, "cylinders": []}
+        for mid in mids:
+            async with self.io:
+                await self.set_header(None)
+                reply = await self.t.send(f"06{mid:02X}", timeout=5)
+            tests = parse_mode06(reply, mid)
+            row = {"this_drive": tests.get(0x0C), "avg_last_10": tests.get(0x0B)}
+            if mid == 0xA1:
+                out["total"] = row
+            else:
+                out["cylinders"].append({"cyl": mid - 0xA1, **row})
+        return out
+
+
+def parse_multi(reply: str, sensors: dict) -> dict[str, float | None]:
+    """'41 0C xx xx 0D xx ...' -> {code: value}. Stops at padding or an unexpected byte."""
+    data = parse_reply(reply, "41")
+    out = {}
+    i = 0
+    while data and i < len(data):
+        s = sensors.get(f"{data[i]:02X}")
+        if not s or s.code in out or i + 1 + s.nbytes > len(data):
+            break
+        try:
+            out[s.code] = round(s.decode(data[i + 1:i + 1 + s.nbytes]), 3)
+        except (ZeroDivisionError, OverflowError, ValueError):
+            out[s.code] = None
+        i += 1 + s.nbytes
+    return out
+
+
+FAILURE_TYPES = {
+    0x00: "", 0x01: "general electrical failure", 0x11: "short to ground", 0x12: "short to battery",
+    0x13: "open circuit (often a burned-out bulb or broken wire)", 0x14: "short to ground or open",
+    0x15: "short to battery or open", 0x16: "voltage too low", 0x17: "voltage too high",
+    0x19: "current too high", 0x1A: "resistance too low", 0x1B: "resistance too high",
+    0x1E: "out of range", 0x4B: "over temperature", 0x92: "performance or incorrect operation",
+    0x96: "component internal failure",
+}
+
+
+def parse_uds_dtcs(reply: str) -> list[dict] | None:
+    """'59 02 <mask> [DTC hi, DTC lo, failure type, status] ...' -> list of codes."""
+    data = parse_reply(reply, "5902")
+    if data is None:
+        return None
+    out = []
+    for i in range(1, len(data) - 3, 4):
+        hi, lo, ftb, status = data[i:i + 4]
+        if not (hi or lo):
+            continue
+        code = "PCBU"[hi >> 6] + f"{(hi & 0x3F) >> 4:X}{hi & 0x0F:X}{lo:02X}"
+        out.append({"code": code, "type": f"{ftb:02X}", "meaning": FAILURE_TYPES.get(ftb, ""),
+                    "active": bool(status & 0x01), "confirmed": bool(status & 0x08)})
+    return out
+
+
+def parse_mode06(reply: str, mid: int) -> dict[int, int]:
+    """CAN mode 06 reply -> {test id: value}. Records are MID TID UNIT VALUE(2) MIN(2) MAX(2)."""
+    data = parse_reply(reply, "46")
+    tests = {}
+    i = 0
+    while data and i + 9 <= len(data):
+        if data[i] == mid:
+            tests[data[i + 1]] = data[i + 3] << 8 | data[i + 4]
+        i += 9
+    return tests
 
 
 def _clean(text: str) -> str:

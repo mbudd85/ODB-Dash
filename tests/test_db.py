@@ -64,3 +64,13 @@ class LocationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class GpsParseTests(unittest.TestCase):
+    def test_tpv(self):
+        from obd.gps import parse_tpv
+        fix = parse_tpv(b'{"class":"TPV","mode":3,"lat":42.33,"lon":-83.04,"speed":12.5,"track":90,"eph":4.2}')
+        self.assertEqual((fix["lat"], fix["lon"], fix["speed"], fix["acc"]), (42.33, -83.04, 12.5, 4.2))
+        self.assertIsNone(parse_tpv(b'{"class":"TPV","mode":1}'))
+        self.assertIsNone(parse_tpv(b'{"class":"SKY"}'))
+        self.assertIsNone(parse_tpv(b'not json'))

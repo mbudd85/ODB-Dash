@@ -13,6 +13,9 @@ There are two ways to run it:
 | Adapter | Bluetooth LE OBD2 adapter (Web Bluetooth) | Veepeak WiFi (TCP 192.168.0.10:35000) |
 | iPhone browser | **Bluefy** (Safari has no Bluetooth or raw sockets) | Safari |
 
+**Raspberry Pi in the car:** the server version, started at boot, auto-recording trips, with the dashboard
+full screen on the Pi's display. See **[PI.md](PI.md)**.
+
 See **[PHONE.md](PHONE.md)** for the iPhone setup of the phone version.
 
 ## Server version: why there's a small Python server
@@ -43,7 +46,8 @@ python server.py           # real adapter at 192.168.0.10:35000
 Then open <http://localhost:8080>. You can also switch between simulator and adapter,
 or change the adapter IP/port, from the ☰ menu without restarting.
 
-Options: `--obd-host`, `--obd-port`, `--port` (web port, default 8080), `--listen`.
+Options: `--obd-host`, `--obd-port`, `--port` (web port, default 8080), `--listen`,
+`--auto-record` (record a trip whenever the adapter is connected), `--gps` (positions from gpsd / USB GPS).
 
 ## Server version on an iPhone (location + map)
 

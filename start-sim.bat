@@ -1,3 +1,2 @@
 @echo off
-cd /d "%~dp0"
-python server.py --sim %*
+call "%~dp0start.bat" --sim %*
