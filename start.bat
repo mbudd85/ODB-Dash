@@ -10,10 +10,10 @@ for %%P in ("py -3.11" "py -3" "python") do (
 )
 if not defined PY (
   echo aiohttp is missing - installing it once...
-  py -3 -m pip install aiohttp >nul 2>nul && set "PY=py -3"
+  py -3 -m pip install --user aiohttp && py -3 -c "import aiohttp" >nul 2>nul && set "PY=py -3"
 )
 if not defined PY (
-  python -m pip install aiohttp && set "PY=python"
+  python -m pip install --user aiohttp && python -c "import aiohttp" >nul 2>nul && set "PY=python"
 )
 if not defined PY (
   echo Could not find or set up Python. Install Python 3 from python.org, then run: py -3 -m pip install aiohttp
