@@ -504,6 +504,19 @@ $("#status").onclick = () => {
 $("#editBtn").onclick = () => setEditing(!state.editing);
 $("#doneBtn").onclick = () => setEditing(false);
 $("#addWidgetBtn").onclick = () => openWidgetDialog();
+// Add every sensor the car reports that isn't on this dashboard yet, as number tiles.
+$("#addAllBtn").onclick = () => {
+  const dash = activeDash();
+  const have = new Set(dash.widgets.map((w) => w.code));
+  const add = allCodes().filter((c) => !have.has(c)).map((c) => state.pids[c]).filter(Boolean)
+    .sort((a, b) => (a.make === "Standard" ? 0 : 1) - (b.make === "Standard" ? 0 : 1)
+      || a.category.localeCompare(b.category) || a.name.localeCompare(b.name));
+  if (!add.length) return alert("Every available sensor is already on this dashboard.");
+  const note = state.supported ? "" : "\n\n(Not connected yet, so this is every sensor the app knows.)";
+  if (!confirm(`Add ${add.length} sensors to “${dash.name}”?${note}`)) return;
+  for (const p of add) dash.widgets.push({ id: uid(), code: p.code, type: "number", size: 1, min: null, max: null, warn: null });
+  save(); renderGrid(); subscribe();
+};
 $("#renameDashBtn").onclick = () => {
   const d = activeDash();
   const name = prompt("Rename dashboard", d.name);
