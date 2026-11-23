@@ -1,0 +1,22 @@
+{
+  "make": "Toyota",
+  "about": "Toyota and Lexus enhanced sensors, from owner forums (Torque Pro / OBD Fusion users). Toyota doesn't publish these; every entry is unverified and model-specific. Some posters gave the temperature in °F; the formulas here convert their equations to °C so the app's unit setting works. Use \"Check factory sensors on this car\" and compare with coolant temperature after a drive before trusting a reading.",
+  "sensors": [
+    {"code": "toyota_atf_pan_tf1", "name": "Transmission fluid temp (pan)", "unit": "°C", "min": -40, "max": 170,
+     "header": "701", "cmd": "221627", "formula": "A-40+B/287", "category": "Transmission",
+     "verified": false, "fits": ["make_toyota"],
+     "note": "Reported working on 2016+ Tacoma V6 automatics (header 701, 2-3 owners on tacomaworld.com, transmission temperature PID thread). Not working on the 4-cylinder per one owner. Converted from the posted °F equation (A*459/255)+(B*1.6/255)-40."},
+    {"code": "toyota_atf_conv_tf2", "name": "Transmission fluid temp (after converter)", "unit": "°C", "min": -40, "max": 170,
+     "header": "701", "cmd": "221628", "formula": "A-40+B/287", "category": "Transmission",
+     "verified": false, "fits": ["make_toyota"],
+     "note": "Same source as the pan sensor: 2016+ Tacoma V6, header 701. Unverified elsewhere."},
+    {"code": "toyota_atf_2182_cd", "name": "Transmission fluid temp (2182, converter)", "unit": "°C", "min": -40, "max": 170,
+     "header": "7E1", "cmd": "2182", "formula": "(((C*256+D)*7/100-400)/10-32)/1.8", "category": "Transmission",
+     "verified": false, "fits": ["make_toyota"],
+     "note": "One owner (2018 Tacoma 2.6 I4 automatic, tacomaworld.com) posted ((C*256+D)*(7/100)-400)/10 in °F with no header given; 7E1 (transmission) is assumed here. Didn't work for a V6 owner. If it reads strangely, the original may have been °C."},
+    {"code": "lexus_atf_2182", "name": "Transmission fluid temp (Lexus ES, 2182)", "unit": "°C", "min": -40, "max": 170,
+     "header": "7E1", "cmd": "2182", "formula": "(((A*256+B)*84/1000-480)/12-32)/1.8", "category": "Transmission",
+     "verified": false, "fits": ["make_toyota"],
+     "note": "One owner of a 2013-2018 Lexus ES (clublexus.com) reported it accurate, posted in °F: ((A*256+B)*(84/1000)-480)/12, header 7E1."}
+  ]
+}

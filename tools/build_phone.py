@@ -19,6 +19,7 @@ SRC = ROOT / "static"
 OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "phone-app"
 
 subprocess.run([sys.executable, str(ROOT / "tools" / "export_sensors.py")], check=True)
+subprocess.run([sys.executable, str(ROOT / "tools" / "build_dtcs.py")], check=True)
 
 if OUT.exists():
     shutil.rmtree(OUT)

@@ -142,6 +142,12 @@
         <div id="dtcOut" class="dtc"></div>
         <button type="button" id="bodyDtcBtn">Check lights (body module codes)</button>
         <div id="bodyDtcOut" class="dtc"></div>
+        <p class="muted small">Look up any code (works offline). Tap a code for what it means, how serious it is and what to check.</p>
+        <div class="row">
+          <label>Code <input id="dtcLookup" placeholder="P0420" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+          <label>Make <select id="dtcMake"></select></label>
+        </div>
+        <div id="dtcLookupOut" class="dtc"></div>
       </fieldset>
       <fieldset>
         <legend>Misfires per cylinder (spark plugs)</legend>
@@ -196,6 +202,8 @@
     </form>
   </dialog>
 
+  <script src="dtc-data.js"></script>
+  <script src="dtc.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

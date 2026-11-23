@@ -612,6 +612,7 @@ $("#menuBtn").onclick = () => {
   $("#misfireOut").textContent = "";
   $("#probeOut").textContent = "";
   $("#bodyDtcOut").textContent = "";
+  fillDtcMakes();
   loadVehicles();
   renderTrips();
   showLocationHelp();
@@ -639,9 +640,36 @@ $("#dtcBtn").onclick = async () => {
     if (!r.ok) throw new Error(await r.text());
     const { codes } = await r.json();
     out.innerHTML = codes.length
-      ? codes.map((c) => `<code>${c}</code>`).join("") + ` <span class="muted small">Look these up for your make/model.</span>`
+      ? codes.map((c) => OBDDtc.render(c, dtcMake(), { open: codes.length === 1 })).join("")
+        + `<p class="muted small">Tap a code for causes and checks.${dtcMake() ? "" : " Pick your make under “Look up any code” for manufacturer-specific meanings."}</p>`
       : "No stored trouble codes.";
   } catch (e) { out.textContent = "Couldn’t read codes: " + e.message; }
+};
+
+// ---------------------------------------------------------------- trouble code lookup
+
+// Make for code meanings: picked in the lookup, else the chosen vehicle profile's make.
+function dtcMake() {
+  return $("#dtcMake").value || state.profiles?.find((p) => p.id === state.vehicle)?.make || "";
+}
+function fillDtcMakes() {
+  const sel = $("#dtcMake");
+  if (sel.options.length) return;
+  sel.innerHTML = `<option value="">My vehicle / any make</option>` + OBDDtc.MAKES.map((m) => `<option>${m}</option>`).join("");
+  try { sel.value = localStorage.getItem("dtcMake") || ""; } catch {}
+}
+function showDtcLookup() {
+  const code = $("#dtcLookup").value.trim();
+  const out = $("#dtcLookupOut");
+  if (!code) { out.innerHTML = ""; return; }
+  out.innerHTML = OBDDtc.normalize(code) && code.replace(/[^0-9a-z]/gi, "").length >= 5
+    ? OBDDtc.render(code, dtcMake(), { open: true })
+    : `<span class="muted small">Type a 5-character code like P0420, B1342, C0035 or U0100.</span>`;
+}
+$("#dtcLookup").oninput = showDtcLookup;
+$("#dtcMake").onchange = () => {
+  try { localStorage.setItem("dtcMake", $("#dtcMake").value); } catch {}
+  showDtcLookup();
 };
 
 // "O2 sensor 3 voltage" -> "O2 bank 2 sensor 1 voltage (#3)", from the car's own layout (PID 13/1D).
@@ -703,7 +731,8 @@ $("#bodyDtcBtn").onclick = async () => {
       return;
     }
     out.innerHTML = codes.length
-      ? codes.map((c) => `<div><code>${c.code}-${c.type}</code> ${c.meaning}${c.active ? " · <b>happening now</b>" : ""}</div>`).join("")
+      ? codes.map((c) => OBDDtc.render(c.code, dtcMake(), { extra: `-${c.type}` })
+          + `<div class="muted small">-${c.type}: ${c.meaning}${c.active ? " · <b>happening now</b>" : ""}</div>`).join("")
         + `<p class="muted small">Look the code up for your vehicle to see which lamp it is. Codes ending in -13 (open circuit) usually mean a bulb is out. Lamps are only checked while they're switched on, so turn on the lights, press the brake and use each signal first.</p>`
       : "No body module codes stored. Lamps are only checked while they’re on, so switch on the lights, press the brake and use each signal, then check again.";
   } catch (e) { out.textContent = "Couldn’t read: " + e.message; }
