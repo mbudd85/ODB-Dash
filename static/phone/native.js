@@ -7,6 +7,7 @@
   const cap = window.Capacitor;
   if (!cap?.isNativePlatform?.() || !cap.nativePromise) return;
   const call = (method, options = {}) => cap.nativePromise("ObdTcp", method, options);
+  let listener = null, handlers = null, streamSeq = 0;   // one "pass" listener for the whole page
 
   class NativeTcpTransport {
     static available = true;
@@ -29,6 +30,23 @@
       } catch (e) {
         throw new Error(e?.message || String(e));
       }
+    }
+
+    // Stream mode: the app keeps polling `passes` (lists of {h, c}) back to back and calls
+    // onPass({i, replies, ms}) for each; onError(message) if the connection drops.
+    async startStream(passes, onPass, onError) {
+      const id = ++streamSeq;
+      listener ||= cap.addListener("ObdTcp", "pass", (ev) => {
+        if (!ev.error) call("ack").catch(() => {});
+        if (ev.id === streamSeq && handlers) (ev.error ? handlers.onError : handlers.onPass)(ev.error || ev);
+      });
+      handlers = { onPass, onError };
+      await call("startStream", { passes, id, timeout: 2000 });
+    }
+    async stopStream() {
+      streamSeq++;   // ignore anything still on its way
+      handlers = null;
+      try { await call("stopStream"); } catch {}
     }
   }
   window.OBDNativeTcp = NativeTcpTransport;

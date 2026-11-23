@@ -28,6 +28,7 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.json.JSONObject;
 
@@ -43,6 +44,14 @@ public class ObdTcpPlugin extends Plugin {
     private InputStream in;
     private OutputStream out;
     private final byte[] chunk = new byte[512];
+    private String header;              // last ATSH sent through here (null = unknown)
+    private long cmdCount, cmdNanos;    // for the "ms per request" figure
+
+    // Stream mode: keep polling the same passes and push each result to the page.
+    private volatile int streamId;      // 0 = no stream
+    private JSArray streamPasses;
+    private int streamTimeout, streamPass;
+    private final AtomicInteger unacked = new AtomicInteger();
 
     @PluginMethod
     public void open(PluginCall call) {
@@ -114,9 +123,90 @@ public class ObdTcpPlugin extends Plugin {
         });
     }
 
+    /**
+     * Start polling non-stop: passes is [[{h: header or "", c: command}, ...], ...]. Each pass's
+     * replies go to the page as a "pass" event {id, i, replies, ms}; the passes repeat until
+     * stopStream. The page acks each event so the app never runs more than 2 passes ahead.
+     */
+    @PluginMethod
+    public void startStream(PluginCall call) {
+        JSArray passes = call.getArray("passes", new JSArray());
+        int id = call.getInt("id", 1);
+        int timeout = call.getInt("timeout", 2000);
+        io.execute(() -> {
+            streamPasses = passes;
+            streamTimeout = timeout;
+            streamPass = 0;
+            unacked.set(0);
+            streamId = id;
+            io.execute(this::streamStep);
+            call.resolve();
+        });
+    }
+
+    @PluginMethod
+    public void stopStream(PluginCall call) {
+        streamId = 0;
+        io.execute(call::resolve);   // after the pass in progress
+    }
+
+    @PluginMethod
+    public void ack(PluginCall call) {
+        if (unacked.get() > 0) unacked.decrementAndGet();
+        call.resolve();
+    }
+
+    private void streamStep() {
+        int id = streamId;
+        if (id == 0 || socket == null) return;
+        if (unacked.get() >= 2) {   // the page is behind: give it a moment
+            try { Thread.sleep(2); } catch (InterruptedException e) { return; }
+            io.execute(this::streamStep);
+            return;
+        }
+        try {
+            org.json.JSONArray items = streamPasses.getJSONArray(streamPass);
+            long n0 = cmdCount, t0 = cmdNanos;
+            JSArray replies = new JSArray();
+            for (int k = 0; k < items.length(); k++) {
+                JSONObject it = items.getJSONObject(k);
+                String h = it.optString("h", "");
+                if (!h.isEmpty() && !h.equals(header)) exchange("ATSH" + h, streamTimeout);
+                String reply = exchange(it.getString("c"), streamTimeout);
+                replies.put(reply == null ? JSONObject.NULL : reply);
+            }
+            if (streamId != id) return;   // stopped meanwhile: drop it
+            JSObject ev = new JSObject();
+            ev.put("id", id);
+            ev.put("i", streamPass);
+            ev.put("replies", replies);
+            ev.put("ms", cmdCount > n0 ? (cmdNanos - t0) / 1e6 / (cmdCount - n0) : 0);
+            unacked.incrementAndGet();
+            notifyListeners("pass", ev);
+            streamPass = (streamPass + 1) % streamPasses.length();
+            io.execute(this::streamStep);
+        } catch (Exception e) {
+            streamId = 0;
+            closeQuietly();
+            JSObject ev = new JSObject();
+            ev.put("id", id);
+            ev.put("error", e.getMessage() != null ? e.getMessage() : e.toString());
+            notifyListeners("pass", ev);
+        }
+    }
+
     /** Write one command, read up to the ">" prompt. null = no prompt within the timeout. */
     private String exchange(String cmd, int timeout) throws java.io.IOException {
+        String reply = exchangeRaw(cmd, timeout);
+        String up = cmd.toUpperCase();
+        if (reply == null || up.equals("ATZ") || up.equals("ATWS") || up.equals("ATD")) header = null;
+        else if (up.startsWith("ATSH")) header = reply.contains("?") ? null : up.substring(4);
+        return reply;
+    }
+
+    private String exchangeRaw(String cmd, int timeout) throws java.io.IOException {
         if (socket == null) throw new java.io.IOException("not connected");
+        long started = System.nanoTime();
         // Throw away anything left over from an earlier, timed-out command.
         while (in.available() > 0) {
             if (in.read(chunk, 0, Math.min(chunk.length, in.available())) < 0) break;
@@ -138,7 +228,11 @@ public class ObdTcpPlugin extends Plugin {
             if (n < 0) throw new java.io.EOFException("the adapter closed the connection");
             for (int i = 0; i < n; i++) {
                 byte b = chunk[i];
-                if (b == '>') return buf.toString();
+                if (b == '>') {
+                    cmdCount++;
+                    cmdNanos += System.nanoTime() - started;
+                    return buf.toString();
+                }
                 if (b != 0) buf.append((char) (b & 0xFF));
             }
         }
@@ -222,6 +316,7 @@ public class ObdTcpPlugin extends Plugin {
     }
 
     private void closeQuietly() {
+        header = null;
         try {
             if (socket != null) socket.close();
         } catch (Exception ignored) {
@@ -233,6 +328,7 @@ public class ObdTcpPlugin extends Plugin {
 
     @Override
     protected void handleOnDestroy() {
+        streamId = 0;
         closeQuietly();
         io.shutdownNow();
     }

@@ -116,8 +116,10 @@ class Elm327 {
   }
 
   // Run fn exclusively, so a header change + request never interleaves with another.
+  // A running native stream (see backend.js) is paused first, so this has the adapter to itself.
   _locked(fn) {
-    const run = this._chain.then(fn, fn);
+    const go = async () => { if (this.pauseStream) await this.pauseStream(); return fn(); };
+    const run = this._chain.then(go, go);
     this._chain = run.catch(() => {});
     return run;
   }
@@ -237,6 +239,12 @@ class Elm327 {
   // One polling pass: every sensor in `codes` (and RV), as few requests and app round trips
   // as possible. Returns { values, timeouts, requests }.
   async readCycle(codes) {
+    const reqs = this.buildCycle(codes);
+    return this.parseCycle(reqs, reqs.length ? await this.batch(reqs) : []);
+  }
+
+  // The requests for one polling pass (no I/O).
+  buildCycle(codes) {
     const sensors = codes.map((c) => this.registry.get(c)).filter(Boolean);
     const multi = this.can && this.multiOk ? sensors.filter((s) => s.standard && s.code in OBD_PID_LENGTHS) : [];
     const reqs = [];
@@ -249,7 +257,16 @@ class Elm327 {
     }
     for (const s of sensors) if (!multi.includes(s)) reqs.push({ ...this.request(s), sensor: s });
     if (codes.includes("RV")) reqs.push({ header: undefined, cmd: "ATRV", rv: true });
-    const replies = reqs.length ? await this.batch(reqs) : [];
+    return reqs;
+  }
+
+  // For a native stream: header "" = keep the current one, otherwise the header to set first.
+  streamItems(reqs) {
+    return reqs.map((r) => ({ h: r.header === undefined ? "" : (r.header || "7DF"), c: r.cmd }));
+  }
+
+  // Replies for buildCycle's requests -> { values, timeouts, requests }.
+  parseCycle(reqs, replies) {
     const values = {};
     let timeouts = 0;
     reqs.forEach((r, i) => {

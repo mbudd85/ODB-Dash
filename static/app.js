@@ -158,7 +158,8 @@ function onData(msg) {
   for (const w of state.widgets.values()) w.update();
   if (state.active === ALL) updateAllTable();
   if (state.status.state === "connected") {
-    $("#footer").textContent = `${state.status.message} · ${msg.rate} readings/s`;
+    const extra = msg.hz != null ? ` · ${msg.hz} updates/s` + (msg.ms != null ? ` · ${msg.ms} ms per request` : "") : "";
+    $("#footer").textContent = `${state.status.message}${extra} · ${msg.rate} readings/s`;
   }
 }
 

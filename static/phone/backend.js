@@ -79,51 +79,118 @@
       || ["1F", "2F", "33", "52", "A6", "07", "09"].includes(s.code);
   }
 
+  // Which sensors to ask for on pass number `cycle`, and which calculated ones to work out.
+  // Slow sensors only every SLOW_EVERY passes; factory sensors in `skip` (no answer lately) left out.
+  function selectCodes(cycle, skip) {
+    let codes = [...new Set([...wanted, ...(store.recording ? recordCodes : [])])].sort();
+    if (cycle % SLOW_EVERY) {
+      const fast = codes.filter((c) => !isSlow(c));
+      if (fast.length) codes = fast;
+    }
+    const calc = codes.filter((c) => Economy.CODES.includes(c));
+    if (calc.length) {   // poll what the calculated sensors need, once each
+      codes = [...new Set([...codes.filter((c) => !calc.includes(c)), ...Economy.needed(elm.supported, calc)])].sort();
+    }
+    // Standard PIDs the car says it lacks are skipped.
+    codes = codes.filter((c) => {
+      const s = registry.get(c);
+      if (c !== "RV" && !s) return false;
+      if (s && s.standard && elm.supported.size && !elm.supported.has(c)) return false;
+      return !skip(c);
+    });
+    return { codes, calc };
+  }
+  const wantedKey = () => [...wanted].sort().join() + "|" + (store.recording ? [...recordCodes].sort().join() : "");
+
+  // One pass's readings -> calculated sensors, log, screen. Counts misses of factory sensors.
+  let lastPass = 0, passTimes = [];
+  function deliver(codes, calc, values, misses, ms) {
+    for (const c of codes) {
+      const s = registry.get(c);
+      if (s && !s.standard) misses.set(c, values[c] == null ? (misses.get(c) || 0) + 1 : 0);
+    }
+    if (calc.length) {
+      const derived = economy.update(values);
+      [derived[Economy.HP], derived[Economy.TORQUE]] = Economy.estimatePower(values);
+      derived[Economy.BOOST] = Economy.boost(values);
+      for (const c of calc) values[c] = derived[c] ?? null;
+    }
+    // Updates per second and readings per second over the last ~2 seconds.
+    const nowMs = performance.now();
+    passTimes.push([nowMs, codes.length]);
+    while (passTimes.length > 2 && nowMs - passTimes[0][0] > 2000) passTimes.shift();
+    const span = (nowMs - passTimes[0][0]) / 1000;
+    const hz = passTimes.length > 1 && span > 0 ? (passTimes.length - 1) / span : 0;
+    const perSec = passTimes.length > 1 && span > 0 ? passTimes.slice(1).reduce((n, p) => n + p[1], 0) / span : 0;
+    lastPass = nowMs;
+    const now = Date.now() / 1000;
+    store.log(now, values).catch(() => {});
+    emit({ type: "data", values, t: now, rate: Math.round(perSec * 10) / 10, hz: Math.round(hz * 10) / 10,
+      ms: ms == null ? null : Math.round(ms * 10) / 10 });
+  }
+
   async function poll(token) {
+    passTimes = [];
+    if (elm.t.startStream) return pollStream(token);
     let failures = 0, cycle = 0;
     const misses = new Map();   // factory sensor -> passes in a row without an answer
     while (token === loopToken) {
-      let codes = [...new Set([...wanted, ...(store.recording ? recordCodes : [])])].sort();
-      if (!codes.length) { await new Promise((r) => setTimeout(r, 200)); continue; }
       cycle++;
-      if (cycle % SLOW_EVERY) {
-        const fast = codes.filter((c) => !isSlow(c));
-        if (fast.length) codes = fast;
-      }
-      const calc = codes.filter((c) => Economy.CODES.includes(c));
-      if (calc.length) {   // poll what the calculated sensors need, once each
-        codes = [...new Set([...codes.filter((c) => !calc.includes(c)), ...Economy.needed(elm.supported, calc)])].sort();
-      }
-      // Standard PIDs the car says it lacks are skipped. Factory sensors that haven't answered
-      // 3 times in a row are only asked every 20th pass, so they don't slow down the rest.
-      codes = codes.filter((c) => {
-        const s = registry.get(c);
-        if (c !== "RV" && !s) return false;
-        if (s && s.standard && elm.supported.size && !elm.supported.has(c)) return false;
-        if (s && !s.standard && (misses.get(c) || 0) >= 3 && cycle % 20) return false;
-        return true;
-      });
+      // Factory sensors that haven't answered 3 times in a row are only asked every 20th pass.
+      const { codes, calc } = selectCodes(cycle, (c) => (misses.get(c) || 0) >= 3 && cycle % 20);
+      if (!codes.length) { await new Promise((r) => setTimeout(r, 200)); continue; }
       const start = performance.now();
       const { values, timeouts, requests } = await elm.readCycle(codes);
       if (requests && timeouts === requests) {
         if (++failures >= 5) throw new Error("adapter stopped responding");
       } else failures = 0;
-      for (const c of codes) {
-        const s = registry.get(c);
-        if (s && !s.standard) misses.set(c, values[c] == null ? (misses.get(c) || 0) + 1 : 0);
-      }
       if (token !== loopToken) return;
-      const secs = (performance.now() - start) / 1000;
-      if (calc.length) {
-        const derived = economy.update(values);
-        [derived[Economy.HP], derived[Economy.TORQUE]] = Economy.estimatePower(values);
-        derived[Economy.BOOST] = Economy.boost(values);
-        for (const c of calc) values[c] = derived[c] ?? null;
+      deliver(codes, calc, values, misses, requests ? (performance.now() - start) / requests : null);
+      await new Promise((r) => setTimeout(r, 0));   // let the screen draw
+    }
+  }
+
+  // Android app: the app polls the adapter non-stop and pushes each pass here, so there's no
+  // gap between one update and the next. The plan is rebuilt when the dashboard, recording,
+  // or what the car answers changes, and every 30 s (to retry factory sensors that went quiet).
+  async function pollStream(token) {
+    const misses = new Map();
+    let failures = 0;
+    while (token === loopToken) {
+      const skipped = new Set([...misses].filter(([, n]) => n >= 3).map(([c]) => c));
+      const passes = [];
+      for (let i = 0; i < SLOW_EVERY; i++) {
+        const sel = selectCodes(i, (c) => skipped.has(c));
+        passes.push({ ...sel, reqs: elm.buildCycle(sel.codes) });
       }
-      const now = Date.now() / 1000;
-      store.log(now, values).catch(() => {});
-      emit({ type: "data", values, t: now, rate: Math.round((codes.length / (secs || 1)) * 10) / 10 });
-      await new Promise((r) => setTimeout(r, 20));
+      if (!passes.some((p) => p.reqs.length)) { await new Promise((r) => setTimeout(r, 200)); continue; }
+      const key = wantedKey(), multi = elm.multiOk, started = performance.now();
+      let watch;
+      const outcome = await new Promise((resolve) => {
+        const onPass = (ev) => {
+          if (token !== loopToken) return resolve("stop");
+          const p = passes[ev.i];
+          if (!p) return;
+          const { values, timeouts, requests } = elm.parseCycle(p.reqs, ev.replies);
+          if (requests && timeouts === requests) {
+            if (++failures >= 5) return resolve(new Error("adapter stopped responding"));
+          } else failures = 0;
+          deliver(p.codes, p.calc, values, misses, ev.ms);
+          const newlyQuiet = [...misses].some(([c, n]) => n >= 3 && !skipped.has(c));
+          if (timeouts || newlyQuiet || elm.multiOk !== multi || wantedKey() !== key || performance.now() - started > 30000) resolve("replan");
+        };
+        elm._locked(async () => {
+          await elm.t.startStream(passes.map((p) => elm.streamItems(p.reqs)), onPass, (msg) => resolve(new Error(msg)));
+          // From now on, another request (trouble codes, factory sensor check...) pauses the stream first.
+          elm.pauseStream = async () => { elm.pauseStream = null; await elm.t.stopStream(); elm.header = "?"; resolve("paused"); };
+        }).catch((e) => resolve(e));
+        // Reconnect, or dashboard/recording changed while nothing arrives: re-check.
+        watch = setInterval(() => { if (token !== loopToken || wantedKey() !== key) resolve("replan"); }, 250);
+      });
+      clearInterval(watch);
+      if (elm.pauseStream) { elm.pauseStream = null; await elm.t.stopStream(); elm.header = "?"; }
+      if (outcome instanceof Error) throw outcome;
+      if (outcome === "paused") await elm._locked(async () => {});   // wait for that request to finish
     }
   }
 
