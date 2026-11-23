@@ -4,7 +4,7 @@
 
 (() => {
   const ICONS = {
-    dash: '<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',
+    realtime: '<rect x="4" y="4" width="7" height="7" rx="2"/><rect x="13" y="4" width="7" height="7" rx="2"/><rect x="4" y="13" width="7" height="7" rx="2"/><rect x="13" y="13" width="7" height="7" rx="2"/>',
     codes: '<path d="M12 3 2.5 20h19L12 3z"/><path d="M12 10v4.5"/><circle cx="12" cy="17.3" r=".6" fill="currentColor"/>',
     map: '<path d="M12 21s-6.5-6.2-6.5-11a6.5 6.5 0 0 1 13 0c0 4.8-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.4"/>',
     rec: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.2" fill="currentColor"/>',
@@ -15,7 +15,7 @@
     settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/>',
   };
   const BUTTONS = [
-    ["dash", "Dashboards", () => showDashboards()],
+    ["realtime", "Realtime", () => showDashboards(REALTIME_ID)],
     ["codes", "Fault codes", () => window.openFaultCodes()],
     ["map", "Trips map", () => { location.href = "map.html"; }],
     ["rec", "Record", () => $("#recBtn").click()],
@@ -124,8 +124,9 @@
     if (!homeVisible && state.dashboards.length) renderGrid();
     subscribe();
   }
-  function showDashboards() {
+  function showDashboards(id) {
     history.pushState({ dash: true }, "", "#dash");
+    if (id && state.dashboards.some((d) => d.id === id)) { state.active = id; localStorage.setItem("activeDash", id); renderTabs(); }
     show(false);
   }
   window.goHome = () => {
