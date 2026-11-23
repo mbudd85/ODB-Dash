@@ -13,6 +13,9 @@ There are two ways to run it:
 | Adapter | Bluetooth LE OBD2 adapter (Web Bluetooth) | Veepeak WiFi (TCP 192.168.0.10:35000) |
 | iPhone browser | **Bluefy** (Safari has no Bluetooth or raw sockets) | Safari |
 
+**Amazon Fire tablet (or any Android tablet):** a standalone app that talks to the Veepeak WiFi adapter
+directly, no server. Download `OBD-Dash.apk` from the latest release and sideload it. See **[FIRE.md](FIRE.md)**.
+
 **Raspberry Pi in the car:** the server version, started at boot, auto-recording trips, with the dashboard
 full screen on the Pi's display. See **[PI.md](PI.md)**.
 

@@ -1,0 +1,9 @@
+{
+  "appId": "app.obddash.fire",
+  "appName": "OBD Dash",
+  "webDir": "www",
+  "android": {
+    "allowMixedContent": false,
+    "webContentsDebuggingEnabled": true
+  }
+}

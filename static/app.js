@@ -878,7 +878,8 @@ async function showLocationHelp() {
   const box = $("#gpsHelp");
   let info = {};
   try { info = await (await fetch("api/info")).json(); } catch {}
-  if (info.phone) $("#dbPath").textContent = "Saved on this phone, in this browser's storage. Download a CSV to keep a copy elsewhere.";
+  if (info.app) $("#dbPath").textContent = "Saved on this tablet, inside the app. Uninstalling the app deletes it, so save a CSV of trips you want to keep (they go to the Download folder).";
+  else if (info.phone) $("#dbPath").textContent = "Saved on this phone, in this browser's storage. Download a CSV to keep a copy elsewhere.";
   else if (info.db_path) $("#dbPath").textContent = `Saved in ${info.db_path} on ${info.host}.`;
   if (window.isSecureContext) { box.hidden = true; return; }
   box.hidden = false;
@@ -937,5 +938,6 @@ async function renderTrips() {
   renderGrid();
   connect();
   addEventListener("resize", () => { for (const w of state.widgets.values()) w.update(); });
-  if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
+  // Not in the Android app: its files are already on the tablet, and a cache would hide app updates.
+  if ("serviceWorker" in navigator && !window.Capacitor?.isNativePlatform?.()) navigator.serviceWorker.register("sw.js").catch(() => {});
 })();

@@ -3,7 +3,7 @@
 "use strict";
 
 const SIM_PIDS = ["04", "05", "06", "07", "0B", "0C", "0D", "0E", "0F", "10", "11",
-  "1F", "21", "2F", "31", "33", "42", "43", "44", "45", "46", "49", "4C", "5C", "5E"];
+  "14", "15", "16", "17", "1D", "1F", "21", "2F", "31", "33", "42", "43", "44", "45", "46", "49", "4C", "5C", "5E"];
 
 class SimulatedCar {
   constructor() {
@@ -42,7 +42,11 @@ class SimulatedCar {
       "04": u8(load * 2.55), "05": u8(this.coolant + 40), "06": u8((r() * 4 + 100) * 1.28),
       "07": u8(102.3 * 1.28), "0B": u8(30 + load * 0.7), "0C": u16(this.rpm * 4), "0D": u8(this.speed),
       "0E": u8((12 + r() * 3 + 64) * 2), "0F": u8(68), "10": u16(maf * 100),
-      "11": u8((14 + this.throttle * 0.8) * 2.55), "1F": u16(this.runtime), "21": u16(0),
+      "11": u8((14 + this.throttle * 0.8) * 2.55),
+      // O2 sensors like a V8 with 4: upstream ones switch, downstream ones stay steady
+      "14": [...u8((Math.random() < 0.5 ? 0.15 : 0.8) * 200 + r() * 10), 128], "15": [...u8(130 + r() * 6), 255],
+      "16": [...u8((Math.random() < 0.5 ? 0.15 : 0.8) * 200 + r() * 10), 128], "17": [...u8(124 + r() * 6), 255],
+      "1D": [0x0F],   // bank 1 sensors 1-2, bank 2 sensors 1-2 "1F": u16(this.runtime), "21": u16(0),
       "2F": u8(this.fuel * 2.55), "31": u16(this.distance), "33": [101],
       "42": u16((14.1 + 0.15 * Math.sin(this.runtime)) * 1000), "43": u16(load * 2.55), "44": u16(32768),
       "45": u8(this.throttle * 2.55), "46": u8(58), "49": u8((15 + this.throttle * 0.8) * 2.55),
@@ -73,8 +77,24 @@ class SimTransport {
     if (cmd === "ATZ") return "\r\rELM327 v1.5 (simulator)\r\r";
     if (cmd === "ATRV") return `${(13.9 + Math.random() * 0.3).toFixed(1)}V\r\r`;
     if (cmd.startsWith("ATSH")) { this.header = cmd.slice(4); return "OK\r\r"; }
+    if (cmd === "ATDPN") return "A6\r\r";
     if (cmd === "ATDP") return "AUTO, ISO 15765-4 (CAN 11/500)\r\r";
     if (cmd.startsWith("AT")) return "OK\r\r";
+    if (["01", "22"].includes(cmd.slice(0, 2)) && cmd.length % 2) cmd = cmd.slice(0, -1);   // "number of replies" digit
+    if (cmd.startsWith("01") && cmd.length > 4) {   // several PIDs at once
+      const vals = this.car.values();
+      const parts = [];
+      for (let i = 2; i < cmd.length; i += 2) { const p = cmd.slice(i, i + 2); if (vals[p]) parts.push(p + hex(vals[p])); }
+      return parts.length ? `41${parts.join("")}\r\r` : "NO DATA\r\r";
+    }
+    if (cmd === "19020D") return this.header === "726" ? "5902FF90E31309\r\r" : "NO DATA\r\r";   // body module: a lamp out
+    if (cmd === "06A0") return "46A0F8000000\r\r";   // misfire monitor: all + cylinders 1-4
+    if (/^06A[1-5]$/.test(cmd)) {
+      const mid = parseInt(cmd.slice(2), 16), cyl = mid - 0xA1;
+      const [now, avg] = { 0: [5, 2], 3: [4, 2] }[cyl] || [0, 0];   // cylinder 3 misfires a little
+      const h4 = (v) => v.toString(16).toUpperCase().padStart(4, "0");
+      return "46" + [[0x0B, avg], [0x0C, now]].map(([tid, v]) => `${hex([mid, tid])}24${h4(v)}0000FFFF`).join("") + "\r\r";
+    }
     if (cmd.startsWith("22")) {
       const c = this.car; c.step();
       const tft = Math.round((40 + Math.min(50, c.runtime / 6)) * 16);

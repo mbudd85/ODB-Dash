@@ -5,6 +5,7 @@ phone-app/ is a folder of static files: host it on any HTTPS static host
 protocol, sensors, database) runs inside the page.
 
     python tools/build_phone.py
+    python tools/build_phone.py fire-app/www    (the Android/Fire tablet app's web files)
 """
 import json
 import re
@@ -15,7 +16,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "static"
-OUT = ROOT / "phone-app"
+OUT = Path(sys.argv[1]).resolve() if len(sys.argv) > 1 else ROOT / "phone-app"
 
 subprocess.run([sys.executable, str(ROOT / "tools" / "export_sensors.py")], check=True)
 
@@ -23,8 +24,8 @@ if OUT.exists():
     shutil.rmtree(OUT)
 shutil.copytree(SRC, OUT)
 
-ENGINE = ["phone/formula.js", "phone/sensors.js", "phone/elm327.js", "phone/sim.js",
-          "phone/ble.js", "phone/store.js", "phone/backend.js"]
+ENGINE = ["phone/formula.js", "phone/sensors.js", "phone/elm327.js", "phone/economy.js", "phone/sim.js",
+          "phone/ble.js", "phone/store.js", "phone/native.js", "phone/backend.js"]
 tags = "\n".join(f'  <script src="{p}"></script>' for p in ENGINE)
 
 for page, extra in (("index.html", ""), ("map.html", "  <script>window.OBD_NO_CONNECT = true;</script>\n")):

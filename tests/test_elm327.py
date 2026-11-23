@@ -117,6 +117,23 @@ class MultiPidTests(unittest.TestCase):
         reply = "00A\r0:410C1AF80D32\r1:0550AAAAAAAAAA\r\r"
         self.assertEqual(parse_multi(reply, group), {"0C": 1726.0, "0D": 50.0, "05": 40.0})
 
+    def test_parse_multi_o2_sends_two_bytes(self):
+        # PID 14 answers voltage + trim (2 bytes) though the formula only uses the first.
+        from obd.elm327 import parse_multi
+        from obd.pids import Registry
+        r = Registry()
+        group = {c: r.get(c) for c in ("14", "33", "0D")}
+        reply = "41 14 50 80 33 65 0D 32\r\r"
+        self.assertEqual(parse_multi(reply, group), {"14": 0.4, "33": 101.0, "0D": 50.0})
+
+    def test_sim_fast_path_with_o2(self):
+        async def go():
+            elm = Elm327(SimTransport(latency=0))
+            await elm.connect()
+            return await elm.read_standard(["14", "15", "33", "0B", "0D", "0C"])
+        vals = asyncio.run(go())
+        self.assertTrue(all(v is not None for v in vals.values()), vals)
+
     def test_sim_fast_path(self):
         async def go():
             elm = Elm327(SimTransport(latency=0))

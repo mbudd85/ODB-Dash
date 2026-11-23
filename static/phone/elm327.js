@@ -109,6 +109,9 @@ class Elm327 {
     this.supported = new Set();
     this.version = "";
     this.protocol = "";
+    this.o2Positions = {};   // sensor number 1-8 -> "bank 1 sensor 2"
+    this.can = false;        // CAN (11 or 29 bit): allows the fast paths below
+    this.multiOk = true;     // engine computer answers several PIDs in one request
     this._chain = Promise.resolve();
   }
 
@@ -125,8 +128,33 @@ class Elm327 {
       const reply = await this.t.send(cmd, 10000);
       if (cmd === "ATZ") this.version = cleanReply(reply);
     }
+    // First real query makes the adapter search for the car's protocol; that can take several seconds.
     await this.detectSupported();
+    await this.detectO2Layout();
     this.protocol = cleanReply(await this.t.send("ATDP"));
+    this.can = ["6", "7", "8", "9"].includes(cleanReply(await this.t.send("ATDPN")).slice(-1));
+    if (this.can) await this.t.send("ATAT2");   // adaptive timing, aggressive: don't wait long after the reply
+  }
+
+  // Which O2 sensor number (PIDs 14-1B) is which bank/position, from PID 13 or 1D.
+  async detectO2Layout() {
+    this.o2Positions = {};
+    for (const [pid, perBank] of [["13", 4], ["1D", 2]]) {
+      if (!this.supported.has(pid)) continue;
+      const data = await this.queryRaw(pid);
+      if (!data || !data.length) continue;
+      for (let i = 0; i < 8; i++) {
+        if (data[0] & (1 << i)) this.o2Positions[i + 1] = `bank ${Math.floor(i / perBank) + 1} sensor ${(i % perBank) + 1}`;
+      }
+      break;
+    }
+  }
+
+  queryRaw(pid, timeoutMs) {
+    return this._locked(async () => {
+      await this.setHeader(null);
+      return parseReply(await this.t.send("01" + pid, timeoutMs), "41" + pid);
+    });
   }
 
   async close() { await this.t.close(); }
@@ -143,10 +171,7 @@ class Elm327 {
     let base = 0;
     for (;;) {
       const pid = base.toString(16).toUpperCase().padStart(2, "0");
-      const data = await this._locked(async () => {
-        await this.setHeader(null);
-        return parseReply(await this.t.send("01" + pid, 15000), "41" + pid);
-      });
+      const data = await this.queryRaw(pid, 15000);
       if (!data || data.length < 4) break;
       const mask = ((data[0] << 24) >>> 0) + (data[1] << 16) + (data[2] << 8) + data[3];
       for (let i = 0; i < 32; i++) {
@@ -168,14 +193,47 @@ class Elm327 {
   }
 
   async readSensor(s) {
+    let cmd = s.cmd, header = s.header;
+    if (this.can) {
+      if (s.standard) header = "7E0";                          // ask only the engine computer, so one reply
+      if (cmd.length / 2 + s.decode.nbytes <= 7) cmd += "1";   // "expect 1 reply": answer comes back at once
+    }
     const reply = await this._locked(async () => {
-      await this.setHeader(s.header);
-      return this.t.send(s.cmd);
+      await this.setHeader(header);
+      return this.t.send(cmd);
     });
     const data = parseReply(reply, s.replyPrefix);
     if (!data || data.length < s.decode.nbytes) return null;
-    const v = s.decode(data);
-    return Number.isFinite(v) ? Math.round(v * 1000) / 1000 : null;
+    return round3(s.decode(data));
+  }
+
+  // Several mode 01 PIDs, up to 6 per request on CAN cars (much faster than one by one).
+  async readStandard(codes) {
+    let sensors = codes.map((c) => this.registry.get(c)).filter(Boolean);
+    const out = {};
+    // Only PIDs with a known reply length can share a request (otherwise the reply can't be split).
+    const single = this.can && this.multiOk ? sensors.filter((s) => !(s.code in OBD_PID_LENGTHS)) : sensors;
+    for (const s of single) out[s.code] = await this.readSensor(s);
+    sensors = sensors.filter((s) => !single.includes(s));
+    for (let i = 0; i < sensors.length; i += 6) {
+      const group = sensors.slice(i, i + 6);
+      if (group.length === 1) { out[group[0].code] = await this.readSensor(group[0]); continue; }
+      const size = 1 + group.reduce((n, s) => n + 1 + OBD_PID_LENGTHS[s.code], 0);
+      const frames = size <= 7 ? 1 : 1 + Math.ceil((size - 6) / 7);
+      const cmd = "01" + group.map((s) => s.code).join("") + (frames <= 15 ? frames.toString(16).toUpperCase() : "");
+      const reply = await this._locked(async () => {
+        await this.setHeader("7E0");
+        return this.t.send(cmd);
+      });
+      const got = parseMulti(reply, Object.fromEntries(group.map((s) => [s.code, s])));
+      if (!Object.keys(got).length) {
+        this.multiOk = false;   // not answered: read one at a time from now on
+        for (const s of group) out[s.code] = await this.readSensor(s);
+        continue;
+      }
+      for (const s of group) out[s.code] = got[s.code] ?? null;
+    }
+    return out;
   }
 
   raw(cmd, header) {
@@ -192,4 +250,95 @@ class Elm327 {
     });
     return parseDtcs(reply);
   }
+
+  // Trouble codes stored in another module (UDS service 19 = read only), e.g. the body
+  // module (726 on Fords), which logs burned-out bulbs. null = module didn't answer.
+  async readModuleDtcs(header) {
+    const reply = await this._locked(async () => {
+      await this.setHeader(header);
+      return this.t.send("19020D", 5000);
+    });
+    return parseUdsDtcs(reply);
+  }
+
+  // Per-cylinder misfire counts from the misfire monitor (mode 06, CAN cars). Read-only.
+  // Monitor IDs: A1 = all cylinders, A2..AD = cylinder 1..12. Test 0B = average over the
+  // last 10 drive cycles, 0C = this (or the last) drive cycle.
+  async readMisfires() {
+    const mask = parseReply(await this._locked(async () => {
+      await this.setHeader(null);
+      return this.t.send("06A0", 10000);
+    }), "46A0");
+    if (!mask || mask.length < 4) return { supported: false, cylinders: [] };
+    const bits = ((mask[0] << 24) >>> 0) + (mask[1] << 16) + (mask[2] << 8) + mask[3];
+    const out = { supported: true, total: null, cylinders: [] };
+    for (let i = 0; i < 32; i++) {
+      const mid = 0xA1 + i;
+      if (!(bits & (2 ** (31 - i))) || mid > 0xAD) continue;
+      const midHex = mid.toString(16).toUpperCase();
+      const reply = await this._locked(async () => {
+        await this.setHeader(null);
+        return this.t.send("06" + midHex, 5000);
+      });
+      const tests = parseMode06(reply, mid);
+      const row = { this_drive: tests[0x0C] ?? null, avg_last_10: tests[0x0B] ?? null };
+      if (mid === 0xA1) out.total = row;
+      else out.cylinders.push({ cyl: mid - 0xA1, ...row });
+    }
+    return out;
+  }
+}
+
+function round3(v) { return Number.isFinite(v) ? Math.round(v * 1000) / 1000 : null; }
+
+// "41 0C xx xx 0D xx ..." -> {code: value}. Stops at padding or an unexpected byte.
+function parseMulti(reply, sensors) {
+  const data = parseReply(reply, "41");
+  const out = {};
+  let i = 0;
+  while (data && i < data.length) {
+    const s = sensors[data[i].toString(16).toUpperCase().padStart(2, "0")];
+    const n = s ? OBD_PID_LENGTHS[s.code] ?? s.decode.nbytes : 0;
+    if (!s || s.code in out || n < s.decode.nbytes || i + 1 + n > data.length) break;
+    out[s.code] = round3(s.decode(data.slice(i + 1, i + 1 + n)));
+    i += 1 + n;
+  }
+  return out;
+}
+
+const FAILURE_TYPES = {
+  0x00: "", 0x01: "general electrical failure", 0x11: "short to ground", 0x12: "short to battery",
+  0x13: "open circuit (often a burned-out bulb or broken wire)", 0x14: "short to ground or open",
+  0x15: "short to battery or open", 0x16: "voltage too low", 0x17: "voltage too high",
+  0x19: "current too high", 0x1A: "resistance too low", 0x1B: "resistance too high",
+  0x1E: "out of range", 0x4B: "over temperature", 0x92: "performance or incorrect operation",
+  0x96: "component internal failure",
+};
+
+// "59 02 <mask> [DTC hi, DTC lo, failure type, status] ..." -> list of codes.
+function parseUdsDtcs(reply) {
+  const data = parseReply(reply, "5902");
+  if (data === null) return null;
+  const out = [];
+  const hx = (n) => n.toString(16).toUpperCase();
+  for (let i = 1; i < data.length - 3; i += 4) {
+    const [hi, lo, ftb, st] = data.slice(i, i + 4);
+    if (!(hi || lo)) continue;
+    out.push({
+      code: "PCBU"[hi >> 6] + hx((hi & 0x3F) >> 4) + hx(hi & 0x0F) + hx(lo).padStart(2, "0"),
+      type: hx(ftb).padStart(2, "0"), meaning: FAILURE_TYPES[ftb] || "",
+      active: !!(st & 0x01), confirmed: !!(st & 0x08),
+    });
+  }
+  return out;
+}
+
+// CAN mode 06 reply -> {test id: value}. Records are MID TID UNIT VALUE(2) MIN(2) MAX(2).
+function parseMode06(reply, mid) {
+  const data = parseReply(reply, "46");
+  const tests = {};
+  for (let i = 0; data && i + 9 <= data.length; i += 9) {
+    if (data[i] === mid) tests[data[i + 1]] = (data[i + 3] << 8) | data[i + 4];
+  }
+  return tests;
 }

@@ -1,0 +1,59 @@
+# Builds the Android app for Amazon Fire tablets (OBD-Dash.apk) and publishes it as the
+# "fire-app-latest" release, so the tablet can download it from one fixed link:
+#   https://github.com/<owner>/<repo>/releases/latest/download/OBD-Dash.apk
+name: Build Fire tablet app
+
+on:
+  push:
+    branches: [main, "claude/**"]
+    paths-ignore: ["**.md"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fire-app
+  cancel-in-progress: true
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Tests
+        run: python -m unittest discover -s tests -v
+      - name: Build the app's web files
+        run: python tools/build_phone.py fire-app/www
+      - name: Add them to the Android project
+        working-directory: fire-app
+        run: |
+          npm ci
+          npx cap sync android
+      - name: Build APK
+        working-directory: fire-app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+          cp app/build/outputs/apk/release/app-release.apk "$GITHUB_WORKSPACE/OBD-Dash.apk"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: OBD-Dash-apk
+          path: OBD-Dash.apk
+      - name: Publish as the latest release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes="OBD Dash for Amazon Fire tablets, build ${GITHUB_RUN_NUMBER} from ${GITHUB_REF_NAME} (${GITHUB_SHA::7}). Install steps: FIRE.md in the repository."
+          gh release delete fire-app-latest --yes --cleanup-tag 2>/dev/null || true
+          gh release create fire-app-latest OBD-Dash.apk --title "OBD Dash for Fire tablet (build ${GITHUB_RUN_NUMBER})" --notes "$notes" --target "$GITHUB_SHA" --latest

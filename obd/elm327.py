@@ -8,7 +8,7 @@ import asyncio
 import logging
 import re
 
-from .pids import Registry, Sensor
+from .pids import PID_LENGTHS, Registry, Sensor
 
 log = logging.getLogger("elm327")
 
@@ -166,16 +166,17 @@ class Elm327:
         sensors = [self.registry.get(c) for c in codes]
         sensors = [s for s in sensors if s]
         out: dict[str, float | None] = {}
-        if not (self.can and self.multi_ok):
-            for s in sensors:
-                out[s.code] = await self.read_sensor(s)
-            return out
+        # Only PIDs with a known reply length can share a request (otherwise the reply can't be split).
+        single = sensors if not (self.can and self.multi_ok) else [s for s in sensors if s.code not in PID_LENGTHS]
+        for s in single:
+            out[s.code] = await self.read_sensor(s)
+        sensors = [s for s in sensors if s not in single]
         for i in range(0, len(sensors), 6):
             group = sensors[i:i + 6]
             if len(group) == 1:
                 out[group[0].code] = await self.read_sensor(group[0])
                 continue
-            size = 1 + sum(1 + s.nbytes for s in group)
+            size = 1 + sum(1 + PID_LENGTHS[s.code] for s in group)
             frames = 1 if size <= 7 else 1 + -(-(size - 6) // 7)
             cmd = "01" + "".join(s.code for s in group) + (f"{frames:X}" if frames <= 15 else "")
             async with self.io:
@@ -248,13 +249,14 @@ def parse_multi(reply: str, sensors: dict) -> dict[str, float | None]:
     i = 0
     while data and i < len(data):
         s = sensors.get(f"{data[i]:02X}")
-        if not s or s.code in out or i + 1 + s.nbytes > len(data):
+        n = PID_LENGTHS.get(s.code, s.nbytes) if s else 0
+        if not s or s.code in out or n < s.nbytes or i + 1 + n > len(data):
             break
         try:
-            out[s.code] = round(s.decode(data[i + 1:i + 1 + s.nbytes]), 3)
+            out[s.code] = round(s.decode(data[i + 1:i + 1 + n]), 3)
         except (ZeroDivisionError, OverflowError, ValueError):
             out[s.code] = None
-        i += 1 + s.nbytes
+        i += 1 + n
     return out
 
 
