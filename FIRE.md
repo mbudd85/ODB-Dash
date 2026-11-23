@@ -30,6 +30,11 @@ the tablet's **Download** folder, then open it with the Files app.
 3. Open OBD Dash. It connects to `192.168.0.10:35000` by itself and the status pill turns green.
    Different address or port? ☰ → Data source → OBD2 adapter (WiFi) → change it → *Reconnect*.
 
+The app opens on a **home screen**: a big live RPM gauge with 9 shortcuts beside it (Dashboards,
+Fault codes, Trips map, Record, Misfires, Lamp check, Vehicle, Adapter, Settings). The Back button or
+⌂ returns to it from the dashboards. With only RPM and speed to read, the home gauge updates as fast
+as the adapter allows; the footer on the dashboards shows updates/s and ms per request.
+
 The screen stays on while the app is open, so it works as an in-car display (plug the tablet into
 the car's USB). ☰ → Data source → *Simulator* lets you try it without a car.
 

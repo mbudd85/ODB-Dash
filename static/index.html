@@ -13,7 +13,20 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Home screen (home.js): shortcuts on the left, live RPM gauge on the right -->
+  <section id="home" class="homescreen" hidden>
+    <nav class="homegrid" aria-label="Main menu"></nav>
+    <div class="homegauge">
+      <div class="rpm"></div>
+      <div class="homeinfo">
+        <span class="homespeed"><b id="homeSpeed">–</b> <span id="homeSpeedUnit">km/h</span></span>
+        <button type="button" id="homeStatus" class="homestatus"><i></i><span id="homeStatusText">…</span></button>
+      </div>
+    </div>
+  </section>
+
   <header>
+    <button id="homeBtn" class="icon" title="Home">⌂</button>
     <div class="tabs" id="tabs"></div>
     <div class="actions">
       <button id="recBtn" class="rec" title="Record this trip to the database">● REC</button>
@@ -81,7 +94,7 @@
   <dialog id="menuDlg">
     <form method="dialog">
       <h2>Settings</h2>
-      <fieldset>
+      <fieldset id="sourceSection">
         <legend>Data source</legend>
         <label class="radio"><input type="radio" name="mode" value="car"> <span id="carLabel">Veepeak adapter (WiFi)</span></label>
         <label class="radio"><input type="radio" name="mode" value="sim"> Simulator (no car)</label>
@@ -127,7 +140,7 @@
         <button type="button" id="consoleSend">Send</button>
         <pre id="consoleOut" class="out"></pre>
       </fieldset>
-      <fieldset>
+      <fieldset id="vehicleSection">
         <legend>Your vehicle</legend>
         <p class="muted small">Standard sensors are detected automatically. Picking your vehicle shows the
           factory extras that are known (or expected) to work on it.</p>
@@ -136,14 +149,14 @@
         <button type="button" id="probeBtn">Check factory sensors on this car</button>
         <div id="probeOut" class="dtc"></div>
       </fieldset>
-      <fieldset>
+      <fieldset id="codesSection">
         <legend>Trouble codes</legend>
         <button type="button" id="dtcBtn">Read check-engine codes</button>
         <div id="dtcOut" class="dtc"></div>
         <button type="button" id="bodyDtcBtn">Check lights (body module codes)</button>
         <div id="bodyDtcOut" class="dtc"></div>
       </fieldset>
-      <fieldset>
+      <fieldset id="misfireSection">
         <legend>Misfires per cylinder (spark plugs)</legend>
         <p class="muted small">From the engine computer's misfire monitor. A cylinder with misfires when the
           others have none often points to that spark plug or coil.</p>
@@ -197,5 +210,6 @@
   </dialog>
 
   <script src="app.js"></script>
+  <script src="home.js"></script>
 </body>
 </html>

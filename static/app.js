@@ -124,6 +124,9 @@ const allCodes = () => Object.keys(state.pids).filter(isSupported);
 
 function subscribe() {
   if (state.ws?.readyState !== WebSocket.OPEN) return;
+  // Home screen: only RPM and speed, so the big gauge updates as fast as the adapter allows.
+  if (document.body.classList.contains("home")) return state.ws.send(JSON.stringify({ type: "subscribe", codes: ["0C", "0D"] }));
+  if (!state.dashboards.length) return;
   const codes = state.active === ALL ? allCodes() : [...new Set(activeDash().widgets.map((w) => w.code))];
   state.ws.send(JSON.stringify({ type: "subscribe", codes }));
 }

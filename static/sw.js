@@ -1,6 +1,6 @@
 // Cache the app shell so the dashboard opens instantly; live data always comes from the server.
 const CACHE = "obd-dash-v11";
-const SHELL = ["./", "index.html", "style.css", "app.js", "manifest.json", "icon.svg", "map.html", "map.js", "vendor/leaflet/leaflet.js", "vendor/leaflet/leaflet.css"];
+const SHELL = ["./", "index.html", "style.css", "app.js", "home.js", "manifest.json", "icon.svg", "map.html", "map.js", "vendor/leaflet/leaflet.js", "vendor/leaflet/leaflet.css"];
 self.addEventListener("install", (e) => e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))));
 self.addEventListener("activate", (e) => e.waitUntil(
   caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE).map((k) => caches.delete(k))))));
