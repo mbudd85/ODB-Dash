@@ -1,0 +1,21 @@
+[
+  {"id": "expedition17", "name": "2017 Ford Expedition EL Limited", "make": "Ford",
+   "about": "3.5 EcoBoost, 6R80 6-speed automatic (separate transmission module, 7E1)."},
+  {"id": "f150_16", "name": "2016 Ford F-150 Platinum", "make": "Ford",
+   "about": "3.5 EcoBoost or 5.0 V8, 6R80 6-speed automatic (7E1). EcoBoost-only sensors give no reply on a 5.0."},
+  {"id": "mustang07", "name": "2007 Ford Mustang GT", "make": "Ford",
+   "about": "4.6 3V V8. The automatic (5R55S) is run by the engine computer (7E0); manual cars have no transmission sensors. Older Ford computer, so far fewer factory sensors."},
+  {"id": "mazda6_12", "name": "2012 Mazda 6", "make": "Mazda",
+   "about": "2.5 MZR or 3.7 V6, pre-Skyactiv. Mazda publishes almost nothing, so factory sensors are few."},
+  {"id": "make_ford", "name": "Other Ford / Lincoln / Mercury", "make": "Ford", "about": "Any other Ford. Shows the most widely shared Ford factory sensors; use \"Check factory sensors\" to see which answer."},
+  {"id": "make_mazda", "name": "Other Mazda", "make": "Mazda", "about": "Any other Mazda. Mazda factory sensors are few and unverified."},
+  {"id": "make_gm", "name": "Chevrolet / GMC (any model)", "make": "Chevrolet", "about": "Factory sensors from owner forums, unverified. Trouble codes use GM meanings."},
+  {"id": "make_ram", "name": "Ram / Dodge / Jeep / Chrysler (any model)", "make": "Ram", "about": "Factory sensors from owner forums, unverified. Trouble codes use Chrysler meanings."},
+  {"id": "make_toyota", "name": "Toyota / Lexus (any model)", "make": "Toyota", "about": "Factory sensors from owner forums (Tacoma, Lexus ES), unverified. Trouble codes use Toyota meanings."},
+  {"id": "make_honda", "name": "Honda / Acura (any model)", "make": "Honda", "about": "No reliable public factory sensors yet; standard sensors and Honda trouble code meanings work."},
+  {"id": "make_hyundai", "name": "Hyundai / Kia (any model)", "make": "Hyundai", "about": "No reliable public factory sensors yet; standard sensors and Hyundai/Kia trouble code meanings work."},
+  {"id": "make_nissan", "name": "Nissan / Infiniti (any model)", "make": "Nissan", "about": "No reliable public factory sensors yet; standard sensors and Nissan trouble code meanings work."},
+  {"id": "make_subaru", "name": "Subaru (any model)", "make": "Subaru", "about": "No reliable public factory sensors yet; standard sensors and Subaru trouble code meanings work."},
+  {"id": "make_vw", "name": "Volkswagen / Audi (any model)", "make": "Volkswagen", "about": "VW factory data needs VW's own protocols (VCDS/OBDeleven). Standard sensors and trouble code meanings work."},
+  {"id": "make_bmw", "name": "BMW / Mini (any model)", "make": "BMW", "about": "BMW factory data needs BMW's own protocols (ISTA/INPA). Standard sensors and trouble code meanings work."}
+]

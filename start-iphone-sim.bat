@@ -1,4 +1,2 @@
 @echo off
-cd /d "%~dp0"
-python server.py --iphone --sim %*
-pause
+call "%~dp0start.bat" --iphone --sim %*

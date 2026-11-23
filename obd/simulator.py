@@ -10,7 +10,7 @@ import random
 import time
 
 SIM_PIDS = ["04", "05", "06", "07", "0B", "0C", "0D", "0E", "0F", "10", "11",
-            "1F", "21", "2F", "31", "33", "42", "43", "44", "45", "46", "49", "4C", "5C", "5E"]
+            "14", "15", "16", "17", "1D", "1F", "21", "2F", "31", "33", "42", "43", "44", "45", "46", "49", "4C", "5C", "5E"]
 
 
 class SimulatedCar:
@@ -68,6 +68,12 @@ class SimulatedCar:
             "0F": [_u8(28 + 40)],
             "10": _u16(maf * 100),
             "11": [_u8((14 + self.throttle * 0.8) * 2.55)],
+            # O2 sensors like a V8 with 4: upstream ones switch, downstream ones stay steady
+            "14": [_u8(random.choice((0.15, 0.8)) * 200 + random.uniform(-10, 10)), 128],
+            "15": [_u8(0.65 * 200 + random.uniform(-6, 6)), 255],
+            "16": [_u8(random.choice((0.15, 0.8)) * 200 + random.uniform(-10, 10)), 128],
+            "17": [_u8(0.62 * 200 + random.uniform(-6, 6)), 255],
+            "1D": [0x0F],   # bank 1 sensors 1-2, bank 2 sensors 1-2
             "1F": _u16(self.runtime),
             "21": _u16(0),
             "2F": [_u8(self.fuel * 2.55)],
@@ -131,12 +137,31 @@ class SimTransport:
         if cmd.startswith("ATSH"):
             self.header = cmd[4:]
             return "OK\r\r"
+        if cmd == "ATDPN":
+            return "A6\r\r"
         if cmd == "ATDP":
             return "AUTO, ISO 15765-4 (CAN 11/500)\r\r"
         if cmd.startswith("AT"):
             return "OK\r\r"
+        if cmd[:2] in ("01", "22") and len(cmd) % 2:
+            cmd = cmd[:-1]   # drop the "number of replies" digit
+        if cmd.startswith("01") and len(cmd) > 4:   # several PIDs at once
+            vals = self.car.values()
+            parts = [p + "".join(f"{b:02X}" for b in vals[p]) for p in (cmd[i:i + 2] for i in range(2, len(cmd), 2)) if p in vals]
+            return ("41" + "".join(parts) + "\r\r") if parts else "NO DATA\r\r"
+        if cmd == "19020D":
+            if self.header == "726":   # pretend body module: right rear stop lamp open circuit
+                return "5902FF90E31309\r\r"
+            return "NO DATA\r\r"
         if cmd.startswith("22"):
             return self._enhanced(cmd[2:])
+        if cmd == "06A0":
+            return "46A0F8000000\r\r"   # misfire monitor: all + cylinders 1-4
+        if cmd.startswith("06A") and len(cmd) == 4 and cmd[3] in "12345":
+            mid = int(cmd[2:], 16)
+            cyl = mid - 0xA1
+            now, avg = {0: (5, 2), 3: (4, 2)}.get(cyl, (0, 0))   # cylinder 3 misfires a little
+            return "46" + "".join(f"{mid:02X}{tid:02X}24{v:04X}0000FFFF" for tid, v in ((0x0B, avg), (0x0C, now))) + "\r\r"
         if cmd == "03":
             return "43010133\r\r"  # one stored code: P0133 (O2 sensor slow response)
         if cmd.startswith("01") and len(cmd) == 4:

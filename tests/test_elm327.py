@@ -75,8 +75,8 @@ class EnhancedTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual(elm.header, "7E1")
         self.assertEqual(await elm.read("ford_oil_life"), 72)
         self.assertIsNone(await elm.read("mazda_atf_temp_alt"))   # refused (7F) -> None
-        rpm = await elm.read("0C")                                  # back to broadcast header
-        self.assertIsNone(elm.header)
+        rpm = await elm.read("0C")                                  # CAN: asks the engine computer only
+        self.assertEqual(elm.header, "7E0")
         self.assertTrue(rpm > 500)
 
     def test_parse_multiframe(self):
@@ -87,3 +87,70 @@ class EnhancedTests(unittest.IsolatedAsyncioTestCase):
     def test_negative_response(self):
         from obd.elm327 import parse_reply
         self.assertIsNone(parse_reply("7F2231\r", "621E1C"))
+
+
+class Mode06Tests(unittest.TestCase):
+    def test_parse_records(self):
+        from obd.elm327 import parse_mode06
+        reply = "46A40B2400020000FFFFA40C2400050000FFFF\r\r"
+        self.assertEqual(parse_mode06(reply, 0xA4), {0x0B: 2, 0x0C: 5})
+
+    def test_sim_misfires(self):
+        import asyncio
+        from obd.elm327 import Elm327
+        from obd.simulator import SimTransport
+        async def go():
+            elm = Elm327(SimTransport(latency=0))
+            return await elm.read_misfires()
+        m = asyncio.run(go())
+        self.assertEqual([c["cyl"] for c in m["cylinders"]], [1, 2, 3, 4])
+        self.assertEqual(m["cylinders"][2]["this_drive"], 4)
+        self.assertEqual(m["total"]["this_drive"], 5)
+
+
+class MultiPidTests(unittest.TestCase):
+    def test_parse_multi(self):
+        from obd.elm327 import parse_multi
+        from obd.pids import Registry
+        r = Registry()
+        group = {c: r.get(c) for c in ("0C", "0D", "05")}
+        reply = "00A\r0:410C1AF80D32\r1:0550AAAAAAAAAA\r\r"
+        self.assertEqual(parse_multi(reply, group), {"0C": 1726.0, "0D": 50.0, "05": 40.0})
+
+    def test_parse_multi_o2_sends_two_bytes(self):
+        # PID 14 answers voltage + trim (2 bytes) though the formula only uses the first.
+        from obd.elm327 import parse_multi
+        from obd.pids import Registry
+        r = Registry()
+        group = {c: r.get(c) for c in ("14", "33", "0D")}
+        reply = "41 14 50 80 33 65 0D 32\r\r"
+        self.assertEqual(parse_multi(reply, group), {"14": 0.4, "33": 101.0, "0D": 50.0})
+
+    def test_sim_fast_path_with_o2(self):
+        async def go():
+            elm = Elm327(SimTransport(latency=0))
+            await elm.connect()
+            return await elm.read_standard(["14", "15", "33", "0B", "0D", "0C"])
+        vals = asyncio.run(go())
+        self.assertTrue(all(v is not None for v in vals.values()), vals)
+
+    def test_sim_fast_path(self):
+        async def go():
+            elm = Elm327(SimTransport(latency=0))
+            await elm.connect()
+            return elm.can, await elm.read_standard(["0C", "0D", "05", "04", "11", "0B", "10"])
+        can, vals = asyncio.run(go())
+        self.assertTrue(can)
+        self.assertEqual(len(vals), 7)
+        self.assertTrue(all(v is not None for v in vals.values()), vals)
+
+
+class UdsDtcTests(unittest.TestCase):
+    def test_parse(self):
+        from obd.elm327 import parse_uds_dtcs
+        codes = parse_uds_dtcs("5902FF90E31309\r\r")
+        self.assertEqual(codes[0]["code"], "B10E3")
+        self.assertEqual(codes[0]["type"], "13")
+        self.assertTrue(codes[0]["active"] and codes[0]["confirmed"])
+        self.assertIsNone(parse_uds_dtcs("NO DATA\r\r"))
+        self.assertEqual(parse_uds_dtcs("5902FF\r\r"), [])

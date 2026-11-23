@@ -13,6 +13,12 @@ There are two ways to run it:
 | Adapter | Bluetooth LE OBD2 adapter (Web Bluetooth) | Veepeak WiFi (TCP 192.168.0.10:35000) |
 | iPhone browser | **Bluefy** (Safari has no Bluetooth or raw sockets) | Safari |
 
+**Amazon Fire tablet (or any Android tablet):** a standalone app that talks to the Veepeak WiFi adapter
+directly, no server. Download `OBD-Dash.apk` from the latest release and sideload it. See **[FIRE.md](FIRE.md)**.
+
+**Raspberry Pi in the car:** the server version, started at boot, auto-recording trips, with the dashboard
+full screen on the Pi's display. See **[PI.md](PI.md)**.
+
 See **[PHONE.md](PHONE.md)** for the iPhone setup of the phone version.
 
 ## Server version: why there's a small Python server
@@ -43,7 +49,8 @@ python server.py           # real adapter at 192.168.0.10:35000
 Then open <http://localhost:8080>. You can also switch between simulator and adapter,
 or change the adapter IP/port, from the ☰ menu without restarting.
 
-Options: `--obd-host`, `--obd-port`, `--port` (web port, default 8080), `--listen`.
+Options: `--obd-host`, `--obd-port`, `--port` (web port, default 8080), `--listen`,
+`--auto-record` (record a trip whenever the adapter is connected), `--gps` (positions from gpsd / USB GPS).
 
 ## Server version on an iPhone (location + map)
 
@@ -98,6 +105,11 @@ networks at once, and while on the Veepeak's network they have no internet throu
 - ☰ → **Test console** sends one read-only request (e.g. header `7E1`, command `221E1C`) and shows the raw reply.
   Commands that clear codes or write to the car are blocked everywhere.
 - ☰ menu: data source, metric/imperial units, and **Read check-engine codes** (read only, it never clears codes).
+- Trouble codes are explained offline: tap a code for its meaning, how serious it is, common causes and what to
+  check, plus tips for your make. About 1,000 generic codes (P0/P2/P3/U/C), about 190 manufacturer codes for Ford,
+  Mazda, GM (Chevy/GMC), Chrysler/Dodge/Jeep/Ram, Toyota/Lexus, Honda/Acura, Hyundai/Kia, Nissan, Subaru, VW and BMW,
+  and detailed troubleshooting for the most common ones. **Look up any code** in the menu works without the car.
+  Manufacturer meanings vary by model and year, so confirm with a service manual before buying parts.
 - On a phone, use "Add to Home Screen" for a full-screen app.
 
 ## Files
@@ -106,7 +118,9 @@ networks at once, and while on the Veepeak's network they have no internet throu
 - `obd/db.py` – SQLite database (dashboards, trips, readings)
 - `obd/elm327.py` – ELM327 protocol (init, PID requests, reply parsing, trouble codes)
 - `obd/pids.py` – standard sensor list + registry; `obd/formula.py` – safe formula evaluator
-- `obd/vehicles/ford.json`, `mazda.json` – manufacturer sensors (add more files for other makes)
+- `obd/vehicles/*.json` – manufacturer sensors (Ford, Mazda, Toyota/Lexus, GM, Ram), all marked unverified with their source
+- `obd/dtc/` – trouble code library: `generic.txt` (titles), `makes.json` (manufacturer codes), `help.json`
+  (causes and checks). `python tools/build_dtcs.py` packs it into `static/dtc-data.js`; `static/dtc.js` does the lookup
 - `obd/simulator.py` – fake adapter that drives a 60-second loop
 - `static/` – the web app (plain HTML/CSS/JS, no build step), shared by both versions
 - `static/phone/` – the phone version's engine: ELM327 protocol, simulator, Bluetooth, on-phone database

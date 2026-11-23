@@ -1,0 +1,16 @@
+{
+  "name": "obd-dash-fire",
+  "version": "1.0.0",
+  "private": true,
+  "description": "OBD Dash as an Android app for Amazon Fire tablets (talks to the WiFi OBD2 adapter directly)",
+  "scripts": {
+    "sync": "cap sync android"
+  },
+  "dependencies": {
+    "@capacitor/android": "8.6.2",
+    "@capacitor/core": "8.6.2"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "8.6.2"
+  }
+}

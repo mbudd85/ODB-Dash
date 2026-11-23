@@ -1,0 +1,14 @@
+{
+  "make": "GM",
+  "about": "Chevrolet and GMC enhanced (mode 22) sensors, from owner forums. GM doesn't publish these; treat each as unverified. Headers: 7E0 = engine (ECM), 7E1/7E2 = transmission (TCM) depending on the vehicle.",
+  "sensors": [
+    {"code": "gm_tft_7e2", "name": "Transmission fluid temp (TCM 7E2)", "unit": "°C", "min": -40, "max": 150,
+     "header": "7E2", "cmd": "221940", "formula": "A-40", "category": "Transmission",
+     "verified": false, "fits": ["make_gm"],
+     "note": "Widely shared among Chevy/GMC truck owners (Torque Pro lists) for 2007+ trucks with a separate transmission module. Did NOT work on a 2009 Holden VE (justcommodores.com), so it varies by vehicle."},
+    {"code": "gm_tft_7e0", "name": "Transmission fluid temp (ECM 7E0)", "unit": "°C", "min": -40, "max": 150,
+     "header": "7E0", "cmd": "221940", "formula": "A-40", "category": "Transmission",
+     "verified": false, "fits": ["make_gm"],
+     "note": "Same request sent to the engine module, for older GM trucks (about 1999-2006) whose engine computer runs the transmission. Unconfirmed."}
+  ]
+}

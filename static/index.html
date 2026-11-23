@@ -13,7 +13,20 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+  <!-- Home screen (home.js): shortcuts on the left, live RPM gauge on the right -->
+  <section id="home" class="homescreen" hidden>
+    <nav class="homegrid" aria-label="Main menu"></nav>
+    <div class="homegauge">
+      <div class="rpm"></div>
+      <div class="homeinfo">
+        <span class="homespeed"><b id="homeSpeed">–</b> <span id="homeSpeedUnit">km/h</span></span>
+        <button type="button" id="homeStatus" class="homestatus"><i></i><span id="homeStatusText">…</span></button>
+      </div>
+    </div>
+  </section>
+
   <header>
+    <button id="homeBtn" class="icon" title="Home">⌂</button>
     <div class="tabs" id="tabs"></div>
     <div class="actions">
       <button id="recBtn" class="rec" title="Record this trip to the database">● REC</button>
@@ -25,6 +38,7 @@
 
   <div class="editbar" id="editbar" hidden>
     <button id="addWidgetBtn" class="primary">+ Add sensor</button>
+    <button id="addAllBtn">+ Add all sensors</button>
     <button id="renameDashBtn">Rename</button>
     <button id="deleteDashBtn" class="danger">Delete dashboard</button>
     <span class="spacer"></span>
@@ -44,7 +58,10 @@
         <input id="pidSearch" type="search" placeholder="Search sensors…" autocomplete="off">
       </label>
       <div class="chips" id="makeChips"></div>
-      <div class="pidlist" id="pidList"></div>
+      <select id="pidSelect" class="pidselect" aria-label="Sensor"></select>
+      <div class="pidmeta"><span id="pidCount" class="muted small"></span>
+        <label class="radio small"><input type="checkbox" id="showUnsupported"> Show sensors this car doesn't report</label></div>
+      <p id="pidNote" class="muted small"></p>
       <button type="button" id="newCustomFromPicker" class="link">+ Define a custom sensor…</button>
       <div class="row">
         <label>Display
@@ -77,7 +94,7 @@
   <dialog id="menuDlg">
     <form method="dialog">
       <h2>Settings</h2>
-      <fieldset>
+      <fieldset id="sourceSection">
         <legend>Data source</legend>
         <label class="radio"><input type="radio" name="mode" value="car"> <span id="carLabel">Veepeak adapter (WiFi)</span></label>
         <label class="radio"><input type="radio" name="mode" value="sim"> Simulator (no car)</label>
@@ -123,10 +140,34 @@
         <button type="button" id="consoleSend">Send</button>
         <pre id="consoleOut" class="out"></pre>
       </fieldset>
-      <fieldset>
+      <fieldset id="vehicleSection">
+        <legend>Your vehicle</legend>
+        <p class="muted small">Standard sensors are detected automatically. Picking your vehicle shows the
+          factory extras that are known (or expected) to work on it.</p>
+        <select id="vehicleSel"></select>
+        <p id="vehicleAbout" class="muted small"></p>
+        <button type="button" id="probeBtn">Check factory sensors on this car</button>
+        <div id="probeOut" class="dtc"></div>
+      </fieldset>
+      <fieldset id="codesSection">
         <legend>Trouble codes</legend>
         <button type="button" id="dtcBtn">Read check-engine codes</button>
         <div id="dtcOut" class="dtc"></div>
+        <button type="button" id="bodyDtcBtn">Check lights (body module codes)</button>
+        <div id="bodyDtcOut" class="dtc"></div>
+        <p class="muted small">Look up any code (works offline). Tap a code for what it means, how serious it is and what to check.</p>
+        <div class="row">
+          <label>Code <input id="dtcLookup" placeholder="P0420" autocomplete="off" autocapitalize="characters" spellcheck="false"></label>
+          <label>Make <select id="dtcMake"></select></label>
+        </div>
+        <div id="dtcLookupOut" class="dtc"></div>
+      </fieldset>
+      <fieldset id="misfireSection">
+        <legend>Misfires per cylinder (spark plugs)</legend>
+        <p class="muted small">From the engine computer's misfire monitor. A cylinder with misfires when the
+          others have none often points to that spark plug or coil.</p>
+        <button type="button" id="misfireBtn">Read misfires</button>
+        <div id="misfireOut" class="dtc"></div>
       </fieldset>
       <div id="adapterInfo" class="muted small"></div>
       <menu><button value="close" class="primary">Close</button></menu>
@@ -162,6 +203,21 @@
     </form>
   </dialog>
 
+  <!-- Confirm / name prompts (in-page, so blocked pop-ups can't break them) -->
+  <dialog id="askDlg">
+    <form method="dialog">
+      <p id="askMsg" class="askmsg"></p>
+      <input id="askInput" autocomplete="off" hidden>
+      <menu>
+        <button value="cancel" id="askCancel" formnovalidate>Cancel</button>
+        <button value="ok" id="askOk" class="primary">OK</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="dtc-data.js"></script>
+  <script src="dtc.js"></script>
   <script src="app.js"></script>
+  <script src="home.js"></script>
 </body>
 </html>

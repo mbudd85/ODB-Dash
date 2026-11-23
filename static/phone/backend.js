@@ -7,10 +7,12 @@
   const realFetch = window.fetch.bind(window);
   const listeners = new Set();   // fake WebSocket connections (one per open page)
   let store, registry, elm = null, loopToken = 0;
-  let config = { mode: "sim" };
+  // The Android app goes straight to the WiFi adapter; a browser starts on the simulator.
+  let config = window.OBDNativeTcp?.available ? { mode: "car", host: "192.168.0.10", port: 35000 } : { mode: "sim" };
   let status = { state: "idle", message: "" };
   let wanted = new Set(), recordCodes = new Set();
   let bleDevice = null;
+  const economy = new Economy.FuelEconomy();
   const ready = (async () => {
     store = await Store.open();
     await store.init();
@@ -52,8 +54,9 @@
         setStatus({ state: "connecting", message: `Connecting to ${where}…` });
         await elm.connect();
         if (token !== loopToken) { await elm.close(); return; }
+        economy.reset();
         setStatus({ state: "connected", message: `Connected to ${where}`, version: elm.version,
-          protocol: elm.protocol, supported: ["RV", ...[...elm.supported].sort()] });
+          protocol: elm.protocol, supported: ["RV", ...[...elm.supported].sort()], o2: elm.o2Positions });
         await poll(token);
       } catch (e) {
         try { await elm?.close(); } catch {}
@@ -66,29 +69,128 @@
     }
   }
 
+  // Slow-changing sensors (temperatures, fuel level, factory PIDs) are read every 5th pass.
+  const SLOW_EVERY = 5;
+  function isSlow(code) {
+    if (Economy.CODES.includes(code)) return false;
+    const s = registry.get(code);
+    if (!s || !s.standard) return true;   // adapter voltage, factory sensors
+    return s.unit === "°C" || s.category === "Diagnostics" || s.category === "Electrical"
+      || ["1F", "2F", "33", "52", "A6", "07", "09"].includes(s.code);
+  }
+
+  // Which sensors to ask for on pass number `cycle`, and which calculated ones to work out.
+  // Slow sensors only every SLOW_EVERY passes; factory sensors in `skip` (no answer lately) left out.
+  function selectCodes(cycle, skip) {
+    let codes = [...new Set([...wanted, ...(store.recording ? recordCodes : [])])].sort();
+    if (cycle % SLOW_EVERY) {
+      const fast = codes.filter((c) => !isSlow(c));
+      if (fast.length) codes = fast;
+    }
+    const calc = codes.filter((c) => Economy.CODES.includes(c));
+    if (calc.length) {   // poll what the calculated sensors need, once each
+      codes = [...new Set([...codes.filter((c) => !calc.includes(c)), ...Economy.needed(elm.supported, calc)])].sort();
+    }
+    // Standard PIDs the car says it lacks are skipped.
+    codes = codes.filter((c) => {
+      const s = registry.get(c);
+      if (c !== "RV" && !s) return false;
+      if (s && s.standard && elm.supported.size && !elm.supported.has(c)) return false;
+      return !skip(c);
+    });
+    return { codes, calc };
+  }
+  const wantedKey = () => [...wanted].sort().join() + "|" + (store.recording ? [...recordCodes].sort().join() : "");
+
+  // One pass's readings -> calculated sensors, log, screen. Counts misses of factory sensors.
+  let lastPass = 0, passTimes = [];
+  function deliver(codes, calc, values, misses, ms) {
+    for (const c of codes) {
+      const s = registry.get(c);
+      if (s && !s.standard) misses.set(c, values[c] == null ? (misses.get(c) || 0) + 1 : 0);
+    }
+    if (calc.length) {
+      const derived = economy.update(values);
+      [derived[Economy.HP], derived[Economy.TORQUE]] = Economy.estimatePower(values);
+      derived[Economy.BOOST] = Economy.boost(values);
+      for (const c of calc) values[c] = derived[c] ?? null;
+    }
+    // Updates per second and readings per second over the last ~2 seconds.
+    const nowMs = performance.now();
+    passTimes.push([nowMs, codes.length]);
+    while (passTimes.length > 2 && nowMs - passTimes[0][0] > 2000) passTimes.shift();
+    const span = (nowMs - passTimes[0][0]) / 1000;
+    const hz = passTimes.length > 1 && span > 0 ? (passTimes.length - 1) / span : 0;
+    const perSec = passTimes.length > 1 && span > 0 ? passTimes.slice(1).reduce((n, p) => n + p[1], 0) / span : 0;
+    lastPass = nowMs;
+    const now = Date.now() / 1000;
+    store.log(now, values).catch(() => {});
+    emit({ type: "data", values, t: now, rate: Math.round(perSec * 10) / 10, hz: Math.round(hz * 10) / 10,
+      ms: ms == null ? null : Math.round(ms * 10) / 10 });
+  }
+
   async function poll(token) {
-    let failures = 0;
+    passTimes = [];
+    if (elm.t.startStream) return pollStream(token);
+    let failures = 0, cycle = 0;
+    const misses = new Map();   // factory sensor -> passes in a row without an answer
     while (token === loopToken) {
-      const codes = [...new Set([...wanted, ...(store.recording ? recordCodes : [])])].sort();
+      cycle++;
+      // Factory sensors that haven't answered 3 times in a row are only asked every 20th pass.
+      const { codes, calc } = selectCodes(cycle, (c) => (misses.get(c) || 0) >= 3 && cycle % 20);
       if (!codes.length) { await new Promise((r) => setTimeout(r, 200)); continue; }
       const start = performance.now();
-      const values = {};
-      for (const code of codes) {
-        const s = registry.get(code);
-        if (code !== "RV" && !s) continue;
-        if (s && s.standard && elm.supported.size && !elm.supported.has(code)) continue;
-        try { values[code] = await elm.read(code); failures = 0; }
-        catch (e) {
-          if (!e.timeout) throw e;
-          if (++failures >= 5) throw new Error("adapter stopped responding");
-        }
-        if (token !== loopToken) return;
+      const { values, timeouts, requests } = await elm.readCycle(codes);
+      if (requests && timeouts === requests) {
+        if (++failures >= 5) throw new Error("adapter stopped responding");
+      } else failures = 0;
+      if (token !== loopToken) return;
+      deliver(codes, calc, values, misses, requests ? (performance.now() - start) / requests : null);
+      await new Promise((r) => setTimeout(r, 0));   // let the screen draw
+    }
+  }
+
+  // Android app: the app polls the adapter non-stop and pushes each pass here, so there's no
+  // gap between one update and the next. The plan is rebuilt when the dashboard, recording,
+  // or what the car answers changes, and every 30 s (to retry factory sensors that went quiet).
+  async function pollStream(token) {
+    const misses = new Map();
+    let failures = 0;
+    while (token === loopToken) {
+      const skipped = new Set([...misses].filter(([, n]) => n >= 3).map(([c]) => c));
+      const passes = [];
+      for (let i = 0; i < SLOW_EVERY; i++) {
+        const sel = selectCodes(i, (c) => skipped.has(c));
+        passes.push({ ...sel, reqs: elm.buildCycle(sel.codes) });
       }
-      const secs = (performance.now() - start) / 1000;
-      const now = Date.now() / 1000;
-      store.log(now, values).catch(() => {});
-      emit({ type: "data", values, t: now, rate: Math.round((codes.length / (secs || 1)) * 10) / 10 });
-      await new Promise((r) => setTimeout(r, 20));
+      if (!passes.some((p) => p.reqs.length)) { await new Promise((r) => setTimeout(r, 200)); continue; }
+      const key = wantedKey(), multi = elm.multiOk, started = performance.now();
+      let watch;
+      const outcome = await new Promise((resolve) => {
+        const onPass = (ev) => {
+          if (token !== loopToken) return resolve("stop");
+          const p = passes[ev.i];
+          if (!p) return;
+          const { values, timeouts, requests } = elm.parseCycle(p.reqs, ev.replies);
+          if (requests && timeouts === requests) {
+            if (++failures >= 5) return resolve(new Error("adapter stopped responding"));
+          } else failures = 0;
+          deliver(p.codes, p.calc, values, misses, ev.ms);
+          const newlyQuiet = [...misses].some(([c, n]) => n >= 3 && !skipped.has(c));
+          if (timeouts || newlyQuiet || elm.multiOk !== multi || wantedKey() !== key || performance.now() - started > 30000) resolve("replan");
+        };
+        elm._locked(async () => {
+          await elm.t.startStream(passes.map((p) => elm.streamItems(p.reqs)), onPass, (msg) => resolve(new Error(msg)));
+          // From now on, another request (trouble codes, factory sensor check...) pauses the stream first.
+          elm.pauseStream = async () => { elm.pauseStream = null; await elm.t.stopStream(); elm.header = "?"; resolve("paused"); };
+        }).catch((e) => resolve(e));
+        // Reconnect, or dashboard/recording changed while nothing arrives: re-check.
+        watch = setInterval(() => { if (token !== loopToken || wantedKey() !== key) resolve("replan"); }, 250);
+      });
+      clearInterval(watch);
+      if (elm.pauseStream) { elm.pauseStream = null; await elm.t.stopStream(); elm.header = "?"; }
+      if (outcome instanceof Error) throw outcome;
+      if (outcome === "paused") await elm._locked(async () => {});   // wait for that request to finish
     }
   }
 
@@ -130,10 +232,14 @@
 
   const json = (data, statusCode = 200) => new Response(JSON.stringify(data), { status: statusCode, headers: { "Content-Type": "application/json" } });
   const text = (t, statusCode) => new Response(t, { status: statusCode });
-  const names = () => Object.fromEntries(registry.catalog().map((p) => [p.code, `${p.name} (${p.unit})`]));
+  const names = () => Object.fromEntries([...registry.catalog(), ...Economy.CATALOG].map((p) => [p.code, `${p.name} (${p.unit})`]));
+  const needConnected = () => (status.state === "connected" ? null : text("Not connected to the adapter", 503));
+  const probeKey = async () => "probe:" + ((await store.get("vehicle")) || "any");
+  const vehicles = async () => json({ profiles: OBD_PROFILES, selected: (await store.get("vehicle")) ?? null,
+    checked: (await store.get(await probeKey())) || {} });
 
   const routes = [
-    ["GET", /^pids$/, () => json(registry.catalog())],
+    ["GET", /^pids$/, () => json([...registry.catalog(), ...Economy.CATALOG])],
     ["GET", /^dashboards$/, async () => json((await store.get("dashboards")) ?? null)],
     ["PUT", /^dashboards$/, async (b) => { await store.set("dashboards", b); return json({ ok: true }); }],
     ["GET", /^config$/, () => json(fullConfig())],
@@ -143,7 +249,7 @@
       return connectNow();
     }],
     ["POST", /^connect$/, () => connectNow()],
-    ["GET", /^info$/, () => json({ phone: true, db_path: "this phone (browser storage)", host: "your phone" })],
+    ["GET", /^info$/, () => json({ phone: true, app: !!window.OBDNativeTcp?.available, db_path: "this device", host: "this device" })],
     ["GET", /^custom-sensors$/, async () => json((await store.get("custom_sensors")) || [])],
     ["PUT", /^custom-sensors$/, async (b) => {
       try { b.forEach((d) => customSensor(d)); } catch (e) { return text(e.message, 400); }
@@ -156,7 +262,7 @@
       const cmd = (d.cmd || "").toUpperCase().replace(/\s/g, "");
       try {
         if (cmd.startsWith("AT")) {
-          if (!["ATRV", "ATDP", "ATDPN", "ATI"].includes(cmd)) throw new Error("only ATRV, ATDP, ATDPN and ATI are allowed here");
+          if (!["ATRV", "ATDP", "ATDPN", "ATI", "AT@1"].includes(cmd)) throw new Error("only ATRV, ATDP, ATDPN and ATI are allowed here");
           return json({ reply: await elm.raw(cmd, null), value: null });
         }
         const s = customSensor({ ...d, code: "custom_test", cmd });
@@ -165,9 +271,33 @@
         return json({ reply, value });
       } catch (e) { return text(e.message, 400); }
     }],
-    ["GET", /^dtcs$/, async () => {
-      if (status.state !== "connected") return text("Not connected to the adapter", 503);
-      return json({ codes: await elm.readDtcs() });
+    ["GET", /^dtcs$/, async () => needConnected() || json({ codes: await elm.readDtcs() })],
+    ["GET", /^misfires$/, async () => needConnected() || json(await elm.readMisfires())],
+    ["GET", /^module-dtcs$/, async (b, m, url) => {
+      const header = { body: "726" }[url.searchParams.get("module") || "body"];
+      if (!header) return text("unknown module", 400);
+      const off = needConnected(); if (off) return off;
+      const codes = await elm.readModuleDtcs(header);
+      return json({ answered: codes !== null, codes: codes || [] });
+    }],
+    ["GET", /^vehicles$/, () => vehicles()],
+    ["PUT", /^vehicle$/, async (b) => {
+      const id = b.id || null;
+      if (id && !OBD_PROFILES.some((p) => p.id === id)) return text("unknown vehicle", 400);
+      await store.set("vehicle", id);
+      return vehicles();
+    }],
+    // Ask the car for every factory sensor that fits the chosen vehicle (read-only mode 22 requests).
+    ["POST", /^probe$/, async () => {
+      const off = needConnected(); if (off) return off;
+      const vid = await store.get("vehicle");
+      const results = {};
+      for (const s of [...registry.sensors.values()]) {
+        if (s.make === "Standard" || s.make === "Custom" || (vid && s.fits && !s.fits.includes(vid))) continue;
+        try { results[s.code] = (await elm.readSensor(s)) !== null; } catch { results[s.code] = false; }
+      }
+      await store.set(await probeKey(), results);
+      return json({ checked: results });
     }],
     ["GET", /^trips$/, async () => json({ recording: store.tripId, trips: await store.trips() })],
     ["POST", /^recording$/, async (b) => {
@@ -208,7 +338,7 @@
         if (method === "POST") { const body = init.body ? JSON.parse(init.body) : {}; return fn(body, match); }
       }
       await ready;
-      return fn(init.body ? JSON.parse(init.body) : {}, match);
+      return fn(init.body ? JSON.parse(init.body) : {}, match, url);
     }
     return text("Not found", 404);
   };
@@ -219,7 +349,13 @@
     if (!a) return;
     e.preventDefault();
     const res = await window.fetch(a.getAttribute("href"));
-    const file = new File([await res.text()], a.getAttribute("href").split("/").pop().replace(/^(\d+)/, "trip-$1"), { type: "text/csv" });
+    const name = a.getAttribute("href").split("/").pop().replace(/^(\d+)/, "trip-$1");
+    const csv = await res.text();
+    if (window.OBDSaveFile) {   // Android app: straight into the Download folder
+      try { alertBox(`Saved ${name} to ${await window.OBDSaveFile(name, csv)}`); } catch (err) { alertBox(`Couldn't save ${name}: ${err.message || err}`); }
+      return;
+    }
+    const file = new File([csv], name, { type: "text/csv" });
     if (navigator.canShare?.({ files: [file] })) {
       try { await navigator.share({ files: [file], title: file.name }); return; } catch (err) { if (err.name === "AbortError") return; }
     }
@@ -229,6 +365,16 @@
     link.click();
     setTimeout(() => URL.revokeObjectURL(link.href), 10000);
   }, true);
+
+  // A small message that fades out (the app has no download bar to show where a file went).
+  function alertBox(msg) {
+    const d = document.createElement("div");
+    d.textContent = msg;
+    d.style.cssText = "position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:9999;max-width:90vw;"
+      + "background:#222;color:#fff;padding:12px 18px;border-radius:10px;font:15px system-ui;box-shadow:0 4px 18px #0008";
+    document.body.appendChild(d);
+    setTimeout(() => d.remove(), 6000);
+  }
 
   // Start: the simulator connects by itself; Bluetooth waits for a tap.
   ready.then(() => {

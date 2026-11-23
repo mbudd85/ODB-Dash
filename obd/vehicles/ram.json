@@ -1,0 +1,10 @@
+{
+  "make": "Ram",
+  "about": "Ram, Dodge, Jeep and Chrysler enhanced sensors, from owner forums. Chrysler doesn't publish these; treat each as unverified.",
+  "sensors": [
+    {"code": "ram_tft_b010", "name": "Transmission fluid temp (68RFE)", "unit": "°C", "min": -40, "max": 150,
+     "header": null, "cmd": "22B010", "formula": "((A*256+B)/64-32)/1.8", "category": "Transmission",
+     "verified": false, "fits": ["make_ram"],
+     "note": "One owner of a 2016 Ram 2500 6.7 Cummins reported it working in Torque Pro (ramforum.com), posted in °F as ((A*256)+B)/64 with the header on auto. A 2012 Ram 2500 owner couldn't get it to work."}
+  ]
+}

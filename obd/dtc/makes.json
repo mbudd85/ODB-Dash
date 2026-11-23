@@ -1,0 +1,297 @@
+{
+ "_about": "Manufacturer-specific trouble codes (P1xxx, P3xxx, U1xxx...). Makers reuse these numbers with different meanings across models and years, so each title is the most widely documented meaning, not a guarantee. Confirm with a factory service manual or a dealer-level scanner (FORScan, Techstream, GDS...) before buying parts.",
+ "groups": {
+  "Ford": {
+   "makes": [
+    "Ford",
+    "Lincoln",
+    "Mercury"
+   ],
+   "about": "Ford, Lincoln and Mercury. Ford engines: bank 1 is the side with cylinder 1 (passenger side on Ford V8s and V6s), sensor 1 is before the catalytic converter, sensor 2 after it.",
+   "codes": {
+    "P1000": "OBD-II monitor testing not complete (normal after a battery disconnect or code clear; drive to finish)",
+    "P1001": "KOER (key on, engine running) self-test not able to complete",
+    "P1100": "Mass air flow (MAF) sensor intermittent",
+    "P1101": "Mass air flow (MAF) sensor out of self-test range",
+    "P1112": "Intake air temperature (IAT) sensor intermittent",
+    "P1116": "Engine coolant temperature (ECT) sensor out of self-test range",
+    "P1117": "Engine coolant temperature (ECT) sensor intermittent",
+    "P1120": "Throttle position sensor out of range (low)",
+    "P1121": "Throttle position sensor inconsistent with MAF sensor",
+    "P1124": "Throttle position sensor out of self-test range",
+    "P1130": "Lack of upstream O2 sensor switch, adaptive fuel at limit (bank 1)",
+    "P1131": "Lack of upstream O2 sensor switch, sensor indicates lean (bank 1)",
+    "P1132": "Lack of upstream O2 sensor switch, sensor indicates rich (bank 1)",
+    "P1150": "Lack of upstream O2 sensor switch, adaptive fuel at limit (bank 2)",
+    "P1151": "Lack of upstream O2 sensor switch, sensor indicates lean (bank 2)",
+    "P1152": "Lack of upstream O2 sensor switch, sensor indicates rich (bank 2)",
+    "P1260": "Theft detected, engine disabled (PATS immobilizer)",
+    "P1270": "Engine RPM or vehicle speed limiter reached",
+    "P1285": "Cylinder head over temperature sensed",
+    "P1288": "Cylinder head temperature (CHT) sensor out of self-test range",
+    "P1289": "Cylinder head temperature (CHT) sensor circuit high input",
+    "P1290": "Cylinder head temperature (CHT) sensor circuit low input",
+    "P1299": "Cylinder head over temperature protection active (engine running in fail-safe)",
+    "P1351": "Ignition diagnostic monitor (IDM) circuit input fault",
+    "P1400": "DPFE (EGR pressure feedback) sensor circuit low",
+    "P1401": "DPFE (EGR pressure feedback) sensor circuit high",
+    "P1405": "DPFE sensor upstream hose off or plugged",
+    "P1406": "DPFE sensor downstream hose off or plugged",
+    "P1443": "EVAP purge flow sensor / purge system fault",
+    "P1450": "Unable to bleed up fuel tank vacuum (EVAP)",
+    "P1500": "Vehicle speed sensor intermittent",
+    "P1505": "Idle air control system at adaptive limit",
+    "P1506": "Idle air control overspeed error",
+    "P1507": "Idle air control underspeed error",
+    "P1516": "Intake manifold runner control input error (bank 1)",
+    "P1517": "Intake manifold runner control input error (bank 2)",
+    "P1518": "Intake manifold runner control stuck open",
+    "P1549": "Intake manifold temperature/runner valve circuit",
+    "P1633": "Keep alive power (KAM) voltage too low",
+    "P1635": "Tire / axle ratio out of acceptable range (PCM programmed for a different tire size or axle)",
+    "P1639": "Vehicle ID block corrupted or not programmed",
+    "P1703": "Brake on/off switch out of self-test range",
+    "P1705": "Transmission range sensor out of self-test range",
+    "P1711": "Transmission fluid temperature sensor out of self-test range",
+    "P1744": "Torque converter clutch system performance",
+    "P1780": "Transmission control switch (O/D cancel) circuit out of self-test range",
+    "P1781": "4x4 low switch out of self-test range",
+    "P1783": "Transmission over temperature condition",
+    "U1900": "CAN communication bus fault, receive error",
+    "B1342": "Electronic control unit is defective (body module)",
+    "B1676": "Battery pack voltage out of range"
+   }
+  },
+  "Mazda": {
+   "makes": [
+    "Mazda"
+   ],
+   "about": "Mazda shares many systems and codes with Ford on 2000s-early 2010s models (Mazda 6, Tribute, CX-7/CX-9). Skyactiv models (2012+) use mostly generic codes.",
+   "codes": {
+    "P1000": "OBD-II monitor testing not complete (drive to finish after a code clear)",
+    "P1260": "Immobilizer system problem (engine disabled)",
+    "P1345": "Camshaft position (SGC) signal problem",
+    "P1449": "EVAP canister drain cut valve circuit",
+    "P1450": "Fuel tank pressure (EVAP) excessive vacuum",
+    "P1562": "PCM +BB (battery backup) voltage low"
+   }
+  },
+  "GM": {
+   "makes": [
+    "Chevy",
+    "Chevrolet",
+    "GMC",
+    "Buick",
+    "Cadillac"
+   ],
+   "about": "General Motors (Chevrolet, GMC, Buick, Cadillac). GM uses mostly generic P0/P2 codes on newer vehicles; P1 codes are more common on 1996-2007 models.",
+   "codes": {
+    "P1101": "Intake airflow system performance",
+    "P1133": "O2 sensor insufficient switching (bank 1 sensor 1)",
+    "P1134": "O2 sensor transition time ratio (bank 1 sensor 1)",
+    "P1153": "O2 sensor insufficient switching (bank 2 sensor 1)",
+    "P1154": "O2 sensor transition time ratio (bank 2 sensor 1)",
+    "P1345": "Crankshaft position / camshaft position correlation",
+    "P1380": "Misfire detected, rough road data not available (ABS)",
+    "P1381": "Misfire detected, no communication with brake/ABS module",
+    "P1406": "EGR valve pintle position circuit",
+    "P1415": "Secondary air injection system (bank 1)",
+    "P1416": "Secondary air injection system (bank 2)",
+    "P1441": "EVAP system flow during non-purge",
+    "P1500": "Starter signal circuit",
+    "P1516": "Throttle actuator control module, throttle actuator position performance",
+    "P1626": "Theft deterrent fuel enable signal not received",
+    "P1630": "Theft deterrent learn mode active",
+    "P1631": "Theft deterrent password incorrect / start enable signal not correct",
+    "P1860": "Torque converter clutch PWM solenoid circuit",
+    "P1870": "Transmission component slipping (4L60-E / 4L65-E)",
+    "U1000": "Class 2 serial data link malfunction (older GM)"
+   }
+  },
+  "Chrysler": {
+   "makes": [
+    "Chrysler",
+    "Dodge",
+    "Jeep",
+    "Ram"
+   ],
+   "about": "Chrysler, Dodge, Jeep and Ram (FCA/Stellantis). Most P1 codes below are from 1996-2007 models; newer ones mostly use generic codes.",
+   "codes": {
+    "P1192": "Inlet air temperature sensor circuit low",
+    "P1193": "Inlet air temperature sensor circuit high",
+    "P1281": "Engine is cold too long (thermostat usually stuck open)",
+    "P1282": "Fuel pump relay control circuit",
+    "P1294": "Target idle not reached",
+    "P1388": "Auto shutdown (ASD) relay control circuit",
+    "P1389": "No ASD relay output voltage at PCM",
+    "P1391": "Intermittent loss of camshaft or crankshaft position sensor",
+    "P1398": "Misfire adaptive numerator at limit (crankshaft sensor target learning)",
+    "P1486": "EVAP leak monitor pinched hose found",
+    "P1491": "Radiator fan control relay circuit",
+    "P1494": "Leak detection pump switch or mechanical fault",
+    "P1495": "Leak detection pump solenoid circuit",
+    "P1496": "5 volt sensor supply output too low",
+    "P1521": "Incorrect engine oil type (HEMI with cylinder deactivation)",
+    "P1594": "Charging system voltage too high",
+    "P1684": "Battery disconnected within the last 50 starts (memory only, no fault)",
+    "P1687": "No communication with the instrument cluster",
+    "P1693": "Fault detected in companion module (check the other computer for codes)",
+    "P1740": "Torque converter clutch or overdrive solenoid performance",
+    "P1762": "Governor pressure sensor offset volts too low or high",
+    "P1763": "Governor pressure sensor volts too high",
+    "P1764": "Governor pressure sensor volts too low",
+    "P1765": "Transmission 12 volt supply relay control circuit"
+   }
+  },
+  "Toyota": {
+   "makes": [
+    "Toyota",
+    "Lexus",
+    "Scion"
+   ],
+   "about": "Toyota, Lexus and Scion. Toyota's A/F (air-fuel ratio) sensors are the upstream oxygen sensors on most 2000+ models.",
+   "codes": {
+    "P1120": "Accelerator pedal position sensor circuit",
+    "P1125": "Throttle control motor circuit",
+    "P1126": "Magnetic clutch circuit (electronic throttle)",
+    "P1127": "Electronic throttle actuator power source circuit",
+    "P1128": "Throttle control motor lock",
+    "P1129": "Electronic throttle control system",
+    "P1130": "A/F sensor circuit range/performance (bank 1 sensor 1)",
+    "P1133": "A/F sensor circuit response (bank 1 sensor 1)",
+    "P1135": "A/F sensor heater circuit (bank 1 sensor 1)",
+    "P1150": "A/F sensor circuit range/performance (bank 2 sensor 1)",
+    "P1153": "A/F sensor circuit response (bank 2 sensor 1)",
+    "P1155": "A/F sensor heater circuit (bank 2 sensor 1)",
+    "P1300": "Igniter circuit (No. 1)",
+    "P1310": "Igniter circuit (No. 2)",
+    "P1346": "VVT sensor circuit range/performance (bank 1)",
+    "P1349": "VVT (variable valve timing) system (bank 1)",
+    "P1520": "Stop lamp switch signal",
+    "P1600": "ECM battery backup (BATT) circuit",
+    "P1633": "ECM (electronic throttle control circuit)",
+    "P1656": "Oil control valve (OCV) circuit (VVT)",
+    "P1780": "Park/neutral position switch"
+   }
+  },
+  "Honda": {
+   "makes": [
+    "Honda",
+    "Acura"
+   ],
+   "about": "Honda and Acura.",
+   "codes": {
+    "P1009": "Variable valve timing control (VTC) advance malfunction",
+    "P1077": "Intake manifold runner control (IMRC) low RPM",
+    "P1078": "Intake manifold runner control (IMRC) high RPM",
+    "P1166": "A/F sensor heater system electrical",
+    "P1167": "A/F sensor heater system",
+    "P1253": "VTEC system malfunction",
+    "P1259": "VTEC system malfunction",
+    "P1297": "Electrical load detector (ELD) circuit low input",
+    "P1298": "Electrical load detector (ELD) circuit high input",
+    "P1361": "TDC sensor intermittent interruption",
+    "P1362": "TDC sensor no signal",
+    "P1381": "Cylinder position (CYP) sensor intermittent interruption",
+    "P1382": "Cylinder position (CYP) sensor no signal",
+    "P1399": "Random cylinder misfire",
+    "P1456": "EVAP leak detected, fuel tank side (often the gas cap)",
+    "P1457": "EVAP leak detected, canister side (often the canister vent shut valve)",
+    "P1491": "EGR valve lift insufficient",
+    "P1607": "ECM/PCM internal circuit malfunction",
+    "P1705": "Automatic transmission range switch short (reverse)",
+    "P1706": "Automatic transmission range switch open"
+   }
+  },
+  "Hyundai-Kia": {
+   "makes": [
+    "Hyundai",
+    "Kia",
+    "Genesis"
+   ],
+   "about": "Hyundai, Kia and Genesis. Many share engines (Theta, Nu, Gamma, Lambda) and codes.",
+   "codes": {
+    "P1326": "Knock Sensor Detection System (KSDS): engine bearing wear detected. Covered by a Hyundai/Kia recall and extended warranty on many Theta II engines: contact a dealer before driving far.",
+    "P1693": "MIL (check engine lamp) circuit malfunction"
+   }
+  },
+  "Nissan": {
+   "makes": [
+    "Nissan",
+    "Infiniti"
+   ],
+   "about": "Nissan and Infiniti. NATS is Nissan's immobilizer.",
+   "codes": {
+    "P1148": "Closed loop control function (bank 1)",
+    "P1168": "Closed loop control function (bank 2)",
+    "P1320": "Ignition signal primary circuit",
+    "P1335": "Crankshaft position sensor (REF)",
+    "P1336": "Crankshaft position sensor (POS), chipped tooth",
+    "P1400": "EGRC solenoid valve circuit",
+    "P1402": "EGR function (closed)",
+    "P1440": "EVAP small leak (positive pressure)",
+    "P1441": "Vacuum cut valve bypass valve",
+    "P1446": "EVAP canister vent control valve closed",
+    "P1447": "EVAP purge flow monitoring",
+    "P1448": "EVAP canister vent control valve open",
+    "P1610": "NATS immobilizer: lock mode",
+    "P1611": "NATS immobilizer: ID discord between ECM and immobilizer",
+    "P1612": "NATS immobilizer: chain of ECM-immobilizer",
+    "P1614": "NATS immobilizer: chain of immobilizer-key",
+    "P1615": "NATS immobilizer: key ID difference",
+    "P1706": "Park/neutral position switch",
+    "P1777": "CVT step motor function",
+    "P1778": "CVT step motor circuit",
+    "U1000": "CAN communication line (modules not hearing each other)",
+    "U1001": "CAN communication line"
+   }
+  },
+  "Subaru": {
+   "makes": [
+    "Subaru"
+   ],
+   "about": "Subaru. Boxer engines: bank 1 is the side with cylinders 1 and 3 (passenger side), bank 2 has cylinders 2 and 4.",
+   "codes": {
+    "P1400": "Fuel tank pressure control solenoid valve circuit low",
+    "P1443": "Vent control solenoid valve function problem",
+    "P1491": "Positive crankcase ventilation (blow-by) function problem",
+    "P1507": "Idle control system malfunction (fail-safe)",
+    "P1518": "Starter switch circuit low input",
+    "P1560": "Back-up voltage circuit malfunction",
+    "P1570": "Immobilizer antenna",
+    "P1571": "Immobilizer reference code incompatibility",
+    "P1572": "Immobilizer circuit failure (except antenna)",
+    "P1574": "Immobilizer key communication failure",
+    "P1576": "EGI (engine) control module EEPROM",
+    "P1577": "Immobilizer control module EEPROM"
+   }
+  },
+  "VW": {
+   "makes": [
+    "Volkswagen",
+    "VW",
+    "Audi"
+   ],
+   "about": "Volkswagen and Audi. VW modules also store their own 5-digit VAG fault codes that a generic OBD2 reader can't see; VCDS or OBDeleven reads those.",
+   "codes": {
+    "P1136": "Long term fuel trim, additive air, bank 1 system too lean",
+    "P1137": "Long term fuel trim, additive air, bank 1 system too rich",
+    "P1176": "O2 correction behind catalyst, bank 1, limit attained",
+    "P1296": "Cooling system malfunction",
+    "P1297": "Pressure hose between turbocharger and throttle valve (boost leak)",
+    "P1545": "Throttle position control malfunction",
+    "P1570": "Engine control module locked (immobilizer)",
+    "P1602": "Power supply (terminal 30) low voltage",
+    "P1640": "Internal control module (EEPROM) error"
+   }
+  },
+  "BMW": {
+   "makes": [
+    "BMW",
+    "Mini"
+   ],
+   "about": "BMW and Mini. BMW modules store their own hex fault codes (e.g. 2A87) that a generic OBD2 reader can't see; ISTA, INPA or a BMW-capable scanner reads those. The OBD2 P-codes here are mostly generic.",
+   "codes": {}
+  }
+ }
+}

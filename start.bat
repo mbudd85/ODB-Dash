@@ -1,3 +1,27 @@
 @echo off
+setlocal
 cd /d "%~dp0"
-python server.py %*
+REM Use whichever installed Python already has aiohttp; if none does, install it.
+set "PY="
+for %%P in ("py -3.11" "py -3" "python") do (
+  if not defined PY (
+    %%~P -c "import aiohttp" >nul 2>nul && set "PY=%%~P"
+  )
+)
+if not defined PY (
+  echo aiohttp is missing - installing it once...
+  py -3 -m pip install --user aiohttp && py -3 -c "import aiohttp" >nul 2>nul && set "PY=py -3"
+)
+if not defined PY (
+  python -m pip install --user aiohttp && python -c "import aiohttp" >nul 2>nul && set "PY=python"
+)
+if not defined PY (
+  echo Could not find or set up Python. Install Python 3 from python.org, then run: py -3 -m pip install aiohttp
+  pause
+  exit /b 1
+)
+REM Stop an OBD Dash that's already running (it would hold port 8080).
+powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.Name -match '^(py|python)[0-9.]*w?\.exe$' -and $_.CommandLine -match 'server\.py' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force -ErrorAction SilentlyContinue }" >nul 2>nul
+echo Starting OBD Dash with %PY% ...
+%PY% server.py %*
+pause

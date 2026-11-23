@@ -1,0 +1,1286 @@
+{
+ "_about": "Troubleshooting for common trouble codes. Keys are a code or a range (P0301-P0312). sev: 1 = safe to drive, fix when convenient; 2 = fix soon, can cause other damage or poor running; 3 = stop or drive gently to a shop. notes: tips for a maker group (names match makes.json groups). Gathered from common repair knowledge; always confirm with testing before buying parts.",
+ "P0010-P0025": {
+  "sev": 2,
+  "what": "The engine computer can't make the variable cam timing go where it commands, or the cam actuator's solenoid circuit has a fault.",
+  "causes": [
+   "Low or dirty engine oil, or the wrong oil grade (cam phasers are moved by oil pressure)",
+   "Sticking or failed cam timing (VVT/oil control) solenoid",
+   "Clogged solenoid screen",
+   "Worn or stretched timing chain or worn cam phaser",
+   "Wiring or connector fault at the solenoid (for the 'circuit' codes)"
+  ],
+  "checks": [
+   "Check the oil level and condition first; change it with the specified grade if it's old",
+   "Unplug the cam solenoid and check its resistance (usually about 6-13 ohms) and the connector for oil or corrosion",
+   "Listen for rattle at cold start (timing chain/phaser)",
+   "If the code returns after an oil change and a known-good solenoid, check timing chain stretch (cam/crank correlation)"
+  ],
+  "notes": {
+   "Ford": "3.5 EcoBoost (2011-2017 F-150/Expedition) and 5.4 3V V8: cam phaser and timing chain wear are well known, often with a cold-start rattle. 4.6 3V Mustang: check oil level and VCT solenoids first.",
+   "GM": "3.6 V6 (2008-2017): P0008/P0017/P0011 together usually mean timing chain stretch, often from long oil change intervals.",
+   "Toyota": "VVT-i oil control valve screens clog on engines with sludge; clean or replace the OCV and change the oil.",
+   "Hyundai-Kia": "CVVT oil control valves are a common fix for P0011/P0014.",
+   "VW": "2.0 TSI (EA888 gen 1/2): a failing timing chain tensioner can set cam correlation codes. Have it checked urgently: a jumped chain wrecks the engine.",
+   "BMW": "VANOS solenoids and low oil level are the usual causes. Clean or swap the intake and exhaust solenoids to see if the code moves.",
+   "Honda": "P0011/P1009 on K-series: VTC actuator or oil control solenoid, often with a cold-start rattle."
+  }
+ },
+ "P0016-P0019": {
+  "sev": 2,
+  "what": "The crankshaft and camshaft sensors disagree about where the engine is: the valve timing is off from where it should be.",
+  "causes": [
+   "Stretched timing chain or worn guides/tensioner",
+   "Cam phaser stuck out of position",
+   "Low oil pressure or dirty oil",
+   "Failing cam or crank sensor, or a damaged tone ring",
+   "Timing jumped a tooth after belt/chain work"
+  ],
+  "checks": [
+   "Check oil level and condition",
+   "Check cam/crank correlation values in live data or with a dealer tool if available",
+   "Inspect the cam and crank sensors and wiring",
+   "If the engine rattles at start-up, have the timing chain inspected before it fails"
+  ],
+  "notes": {
+   "Ford": "3.5 EcoBoost and 5.4 3V: timing chain stretch and cam phasers are a common cause.",
+   "GM": "3.6 V6: timing chain stretch (often with P0008/P0009).",
+   "VW": "2.0 TSI: timing chain tensioner. Don't keep driving it long."
+  }
+ },
+ "P0030-P0064": {
+  "sev": 1,
+  "what": "The heater inside an oxygen sensor (which warms it up quickly) has an electrical fault.",
+  "causes": [
+   "Failed heater inside the O2 sensor (most common)",
+   "Blown O2 heater fuse",
+   "Damaged wiring, often melted on the exhaust",
+   "Corroded connector"
+  ],
+  "checks": [
+   "Check the O2 heater fuse",
+   "Unplug the sensor and measure the heater resistance across the two same-colored wires (usually 2-15 ohms; open = bad sensor)",
+   "Check for 12 V on the heater feed with the key on",
+   "Inspect the harness along the exhaust"
+  ],
+  "match": "Heater"
+ },
+ "P0068": {
+  "sev": 2,
+  "what": "The air the engine measures (MAF/MAP) doesn't match how far the throttle is open.",
+  "causes": [
+   "Vacuum or intake leak after the throttle",
+   "Dirty or failing MAF sensor",
+   "Dirty throttle body",
+   "Throttle position sensor fault"
+  ],
+  "checks": [
+   "Look for cracked intake boots and vacuum hoses",
+   "Clean the MAF with MAF cleaner and the throttle body",
+   "Compare MAF g/s at idle with the expected value (roughly the engine size in liters x 0.8-1.0 g/s, warm)"
+  ],
+  "notes": {
+   "Ford": "Common on Ford electronic throttle trucks; cleaning the throttle body and MAF and checking intake leaks fixes many."
+  }
+ },
+ "P0087": {
+  "sev": 3,
+  "what": "Fuel pressure is lower than the engine computer wants.",
+  "causes": [
+   "Weak fuel pump",
+   "Clogged fuel filter",
+   "Faulty fuel pressure sensor",
+   "On direct injection engines: worn high-pressure pump or its cam follower",
+   "Fuel pump driver module fault"
+  ],
+  "checks": [
+   "Compare desired vs. actual fuel pressure in live data",
+   "Test fuel pressure with a gauge",
+   "Check pump power and ground",
+   "Don't run the tank nearly empty"
+  ],
+  "notes": {
+   "VW": "2.0 FSI/TSI: the high-pressure pump cam follower wears through. Inspect it; a worn-through follower damages the camshaft.",
+   "BMW": "N54/N55: high-pressure fuel pump failures are well known.",
+   "Ford": "EcoBoost: check low-pressure pump and the fuel pump driver module."
+  }
+ },
+ "P0101": {
+  "sev": 2,
+  "what": "The mass air flow (MAF) sensor reading doesn't make sense for how the engine is running.",
+  "causes": [
+   "Dirty MAF sensor (oiled air filters are a common cause)",
+   "Intake air leak between the MAF and the engine",
+   "Clogged air filter",
+   "Failing MAF sensor"
+  ],
+  "checks": [
+   "Inspect the air filter and intake duct for cracks or loose clamps",
+   "Clean the MAF with MAF-safe cleaner only (don't touch the wires)",
+   "Check MAF g/s at idle and at 2500 RPM against normal values",
+   "Check fuel trims: high positive trims together with this code point to an air leak or a dirty MAF"
+  ],
+  "notes": {
+   "Ford": "Dirty MAF is very common on Fords; clean it first.",
+   "Toyota": "Clean the MAF; Toyota MAFs are sensitive to oil from oiled filters.",
+   "GM": "Check for a cracked intake duct and clean the MAF."
+  }
+ },
+ "P0102-P0103": {
+  "sev": 2,
+  "what": "The MAF sensor signal is out of range electrically (too low or too high).",
+  "causes": [
+   "Unplugged or corroded MAF connector",
+   "Broken wire or short in the MAF circuit",
+   "Failed MAF sensor",
+   "Air leak or blocked air filter (low)"
+  ],
+  "checks": [
+   "Check the connector and wiring",
+   "Check MAF power (12 V or 5 V) and ground",
+   "Watch MAF reading in live data while wiggling the harness"
+  ]
+ },
+ "P0106-P0109": {
+  "sev": 2,
+  "what": "The manifold pressure (MAP) sensor reading is wrong or out of range.",
+  "causes": [
+   "Cracked or disconnected vacuum hose to the MAP sensor",
+   "Failed MAP sensor",
+   "Wiring/connector fault",
+   "Vacuum leak or mechanical engine problem (low vacuum)"
+  ],
+  "checks": [
+   "With key on, engine off, MAP should equal barometric pressure (about 100 kPa at sea level)",
+   "At warm idle MAP is usually about 25-40 kPa",
+   "Inspect the vacuum hose and connector"
+  ]
+ },
+ "P0110-P0114": {
+  "sev": 1,
+  "what": "The intake air temperature sensor reading is wrong or out of range.",
+  "causes": [
+   "Unplugged or damaged sensor connector",
+   "Failed sensor (often built into the MAF)",
+   "Wiring fault"
+  ],
+  "checks": [
+   "After the car sits overnight, intake air temp should match outside temperature and coolant temp",
+   "Check the connector and wiring"
+  ]
+ },
+ "P0115-P0119": {
+  "sev": 2,
+  "what": "The engine coolant temperature sensor reading is wrong or out of range.",
+  "causes": [
+   "Failed coolant temperature sensor",
+   "Low coolant (sensor in an air pocket)",
+   "Wiring or connector fault"
+  ],
+  "checks": [
+   "Check coolant level",
+   "Cold engine: coolant temp should be close to outside temperature",
+   "Warm engine: should read about 85-105 °C (185-220 °F)",
+   "A reading of -40 means open circuit; a very high reading means a short"
+  ],
+  "notes": {
+   "Ford": "Many Fords use a cylinder head temperature (CHT) sensor instead; see P1285-P1299 too."
+  }
+ },
+ "P0120-P0124": {
+  "sev": 2,
+  "what": "The throttle or accelerator pedal position sensor signal is wrong or out of range.",
+  "causes": [
+   "Worn or failed throttle position sensor",
+   "Dirty throttle body",
+   "Wiring or connector fault",
+   "5 V reference problem shared with other sensors"
+  ],
+  "checks": [
+   "Watch throttle position in live data while slowly pressing the pedal: it should rise smoothly without jumps",
+   "Check the connector",
+   "If several sensor codes appear together, check the 5 V reference (P0641/P0651)"
+  ]
+ },
+ "P0125": {
+  "sev": 1,
+  "what": "The engine takes too long to warm up enough for closed-loop fuel control.",
+  "causes": [
+   "Thermostat stuck open",
+   "Coolant temperature sensor reading low",
+   "Low coolant"
+  ],
+  "checks": [
+   "Watch coolant temperature: a healthy engine reaches about 80 °C (176 °F) within 10-15 minutes of driving",
+   "Check coolant level"
+  ]
+ },
+ "P0128": {
+  "sev": 1,
+  "what": "The engine doesn't warm up to normal temperature in time. Almost always the thermostat is stuck open.",
+  "causes": [
+   "Thermostat stuck open (most common)",
+   "Coolant temperature sensor reading low",
+   "Low coolant",
+   "Cooling fan running all the time"
+  ],
+  "checks": [
+   "Watch coolant temperature on a drive: it should reach about 85-105 °C (185-220 °F) and stay there",
+   "Poor cabin heat in winter is another hint",
+   "Check the fan isn't running constantly on a cold engine"
+  ],
+  "notes": {
+   "Chrysler": "Common on the 3.6 Pentastar and older Jeeps (also see P1281).",
+   "BMW": "Electric thermostats (often with P0597) fail commonly.",
+   "Subaru": "Common; replace the thermostat with an OEM part.",
+   "Ford": "Common on 4.6/5.4 V8s."
+  }
+ },
+ "P0130-P0167": {
+  "sev": 1,
+  "what": "An oxygen sensor's signal is out of range, slow, or not changing. Sensor 1 is before the catalytic converter, sensor 2 after it.",
+  "causes": [
+   "Failed or aged oxygen sensor",
+   "Exhaust leak near the sensor",
+   "Wiring damaged by exhaust heat, or a corroded connector",
+   "Engine actually running lean or rich (check fuel trims)",
+   "Contamination (coolant, oil, silicone)"
+  ],
+  "checks": [
+   "Watch the sensor in live data at a steady 2000-2500 RPM, warm: upstream sensors should switch quickly between about 0.1 and 0.9 V; downstream sensors should be steadier, around 0.5-0.8 V",
+   "A sensor stuck near 0 V or 0.45 V usually has failed or has an open circuit",
+   "Check for exhaust leaks and wiring damage",
+   "Check fuel trims before replacing the sensor"
+  ],
+  "match": "O2 Sensor"
+ },
+ "P0171": {
+  "sev": 2,
+  "what": "The engine is getting too much air or too little fuel on bank 1, and the computer has added as much fuel as it's allowed to.",
+  "causes": [
+   "Vacuum leak (cracked hose, PCV hose, intake gasket)",
+   "Dirty or failing MAF sensor",
+   "Weak fuel pump or clogged fuel filter",
+   "Clogged or leaking fuel injectors",
+   "Exhaust leak before the upstream O2 sensor"
+  ],
+  "checks": [
+   "Look at long-term fuel trim: over +10% means the computer is adding fuel",
+   "If trims are high at idle but normal at 2500 RPM, look for a vacuum leak; if high everywhere, suspect fuel delivery or the MAF",
+   "Listen for hissing, check PCV and intake hoses; a smoke test finds hidden leaks",
+   "Clean the MAF sensor",
+   "Check fuel pressure"
+  ],
+  "notes": {
+   "Ford": "Common: cracked PCV hose, intake manifold gasket, dirty MAF. If P0174 is also set, the cause is common to both banks (MAF, fuel pressure, a big vacuum leak).",
+   "GM": "LS V8s: intake manifold gaskets and the PCV system; 3.8 V6: lower intake gaskets.",
+   "Toyota": "Dirty MAF and cracked intake boot are the usual causes.",
+   "VW": "2.0 TSI: failed PCV valve / oil separator diaphragm on the valve cover.",
+   "BMW": "Crankcase vent (CCV) valve, intake boot, DISA valve, and vacuum lines. Very common.",
+   "Honda": "PCV valve and hose, and intake gaskets.",
+   "Subaru": "Check for intake leaks and the PCV hose; on older EJ25s rule out head gasket issues."
+  }
+ },
+ "P0174": {
+  "sev": 2,
+  "same": "P0171",
+  "what": "Same as P0171 but on bank 2. If both are set, look for a cause common to both banks (MAF, fuel pressure, a large vacuum leak)."
+ },
+ "P0172": {
+  "sev": 2,
+  "what": "The engine is getting too much fuel or too little air on bank 1.",
+  "causes": [
+   "Leaking fuel injector",
+   "Fuel pressure too high (regulator)",
+   "Dirty or failing MAF reading too high",
+   "Coolant temperature sensor reading too cold",
+   "Stuck-open EVAP purge valve",
+   "Clogged air filter"
+  ],
+  "checks": [
+   "Long-term fuel trim below -10% confirms it",
+   "Check the coolant temperature reading on a warm engine",
+   "Check fuel pressure and look for a leaking injector or regulator (fuel in the vacuum hose)",
+   "Check the purge valve isn't stuck open"
+  ]
+ },
+ "P0175": {
+  "sev": 2,
+  "same": "P0172",
+  "what": "Same as P0172 but on bank 2."
+ },
+ "P0217": {
+  "sev": 3,
+  "what": "The engine is overheating.",
+  "causes": [
+   "Low coolant or a leak",
+   "Failed cooling fan",
+   "Stuck thermostat",
+   "Failed water pump",
+   "Blocked radiator",
+   "Head gasket failure"
+  ],
+  "checks": [
+   "Stop and let the engine cool. Don't open a hot radiator cap",
+   "Check coolant level and look for leaks",
+   "Check that the cooling fans run when hot or with the A/C on"
+  ]
+ },
+ "P0218": {
+  "sev": 3,
+  "what": "The transmission fluid is overheating.",
+  "causes": [
+   "Towing or heavy load in hot weather",
+   "Low or burnt transmission fluid",
+   "Blocked transmission cooler",
+   "Torque converter clutch slipping"
+  ],
+  "checks": [
+   "Let it cool down",
+   "Check fluid level and condition",
+   "Watch transmission temperature: above about 120 °C (250 °F) is too hot"
+  ]
+ },
+ "P0234": {
+  "sev": 3,
+  "what": "The turbo or supercharger is making more boost than it should.",
+  "causes": [
+   "Wastegate stuck closed",
+   "Boost control solenoid fault",
+   "Vacuum/pressure line to the wastegate actuator off or cracked",
+   "Boost sensor fault"
+  ],
+  "checks": [
+   "Ease off: overboost can damage the engine",
+   "Inspect wastegate lines and the actuator",
+   "Compare desired vs. actual boost"
+  ]
+ },
+ "P0299": {
+  "sev": 2,
+  "what": "The turbo or supercharger isn't making as much boost as commanded.",
+  "causes": [
+   "Boost leak (loose intercooler hose or clamp, cracked charge pipe)",
+   "Wastegate stuck open or a sticking actuator",
+   "Faulty boost control or bypass/diverter valve",
+   "Failing turbocharger",
+   "Restricted air filter or exhaust"
+  ],
+  "checks": [
+   "Inspect all intercooler hoses and clamps",
+   "Compare desired vs. actual boost in live data",
+   "Pressure-test the intake (boost leak test)",
+   "Check the wastegate actuator moves freely"
+  ],
+  "notes": {
+   "Ford": "EcoBoost: intercooler condensation (stumble in humid weather), cracked charge pipe couplers, and wastegate rattle.",
+   "VW": "2.0 TSI: torn diverter valve diaphragm or a split boost hose.",
+   "BMW": "N54: wastegate rattle and boost leaks at the charge pipe."
+  }
+ },
+ "P0300": {
+  "sev": 3,
+  "what": "The engine is misfiring on more than one cylinder (or randomly). If the check-engine light is flashing, the misfire is bad enough to damage the catalytic converter.",
+  "causes": [
+   "Worn spark plugs or failed coils/plug wires",
+   "Vacuum leak or lean condition",
+   "Low fuel pressure or dirty injectors",
+   "Bad gasoline",
+   "Low compression, sticking valves or failing lifters",
+   "Crank sensor or tone ring problems (false misfires)"
+  ],
+  "checks": [
+   "If the light is flashing, reduce load and avoid hard acceleration",
+   "Use the app's misfire counts (menu) to see which cylinders are misfiring",
+   "Check fuel trims for a lean condition",
+   "Inspect spark plugs and coils",
+   "Do a compression test if misfires stay on one bank"
+  ],
+  "notes": {
+   "GM": "5.3/6.2 V8 with AFM/DFM: collapsed lifters cause misfires (often with ticking). P3400 alongside points there.",
+   "Chrysler": "HEMI with MDS: lifter/cam wear. 2011-2013 3.6 Pentastar: left cylinder head valve seat problems (misfires on cylinders 2/4/6).",
+   "Honda": "V6 with VCM: fouled plugs and stuck piston rings from cylinder deactivation are common.",
+   "Subaru": "EJ25: coils, and head gasket leaks on older engines.",
+   "VW": "Direct injection: coil packs and carbon buildup on intake valves.",
+   "BMW": "Coils first; N54/N55 also injectors.",
+   "Ford": "4.6/5.4 3V: coil boots and plugs (3V plugs can break on removal; use the Ford procedure)."
+  }
+ },
+ "P0301-P0312": {
+  "sev": 3,
+  "what": "One specific cylinder is misfiring (the last digit is the cylinder number). A flashing check-engine light means stop driving hard.",
+  "causes": [
+   "Bad spark plug or ignition coil on that cylinder (most common)",
+   "Clogged or failed fuel injector",
+   "Vacuum leak near that cylinder",
+   "Low compression (valve, ring, head gasket)"
+  ],
+  "checks": [
+   "Swap that cylinder's coil with a neighbor's, clear codes and drive: if the misfire moves, replace the coil",
+   "Inspect and replace the spark plug (check the gap and for oil or cracks)",
+   "Swap the injector or listen to it with a screwdriver/stethoscope",
+   "Compression test that cylinder"
+  ],
+  "notes": {
+   "Ford": "Ford V8 cylinder numbering: 1-4 on the passenger side (front to back), 5-8 on the driver side.",
+   "GM": "GM V8: odd cylinders (1,3,5,7) on the driver side, even on the passenger side.",
+   "Chrysler": "Chrysler V8: odd on the driver side, even on the passenger side."
+  }
+ },
+ "P0325-P0334": {
+  "sev": 2,
+  "what": "A knock sensor circuit has a fault, so the engine computer may pull timing and the engine can feel sluggish.",
+  "causes": [
+   "Failed knock sensor",
+   "Damaged wiring (often under the intake manifold)",
+   "Loose sensor (wrong torque)"
+  ],
+  "checks": [
+   "Check the connector and wiring",
+   "Measure sensor resistance against spec",
+   "Make sure it's torqued to spec"
+  ]
+ },
+ "P0335-P0339": {
+  "sev": 3,
+  "what": "The crankshaft position sensor signal is missing or erratic. The engine may stall or not start.",
+  "causes": [
+   "Failed crank sensor",
+   "Damaged wiring or connector",
+   "Damaged or dirty tone ring",
+   "Sensor gap wrong"
+  ],
+  "checks": [
+   "Watch RPM while cranking: 0 RPM while cranking points to the crank sensor",
+   "Inspect the sensor and connector",
+   "Check the 5 V supply and ground"
+  ],
+  "notes": {
+   "Nissan": "VQ and QR engines: crank and cam sensors are a well-known failure (stalling, no-start)."
+  }
+ },
+ "P0340-P0349": {
+  "sev": 2,
+  "what": "A camshaft position sensor signal is missing or erratic.",
+  "causes": [
+   "Failed cam sensor",
+   "Wiring/connector fault",
+   "Timing chain/belt problem",
+   "Low battery voltage when cranking"
+  ],
+  "checks": [
+   "Inspect the sensor and connector for oil",
+   "Check the 5 V supply and ground",
+   "Check battery voltage while cranking (should stay above 9.6 V)"
+  ],
+  "notes": {
+   "Ford": "5.4 3V: cam sensors and connectors soaked with oil.",
+   "Nissan": "Cam sensors commonly fail on Nissans (stalling, hard start)."
+  }
+ },
+ "P0351-P0362": {
+  "sev": 3,
+  "what": "The ignition coil for one cylinder has a circuit fault, usually causing a misfire on that cylinder.",
+  "causes": [
+   "Failed ignition coil",
+   "Damaged coil connector or wiring",
+   "Engine computer coil driver fault (rare)"
+  ],
+  "checks": [
+   "Swap the coil with another cylinder and see if the code follows",
+   "Check the connector for 12 V feed",
+   "Check for a misfire code on the same cylinder"
+  ]
+ },
+ "P0401": {
+  "sev": 1,
+  "what": "The engine computer sees too little exhaust gas recirculation (EGR) flow.",
+  "causes": [
+   "Carbon-clogged EGR passages or valve",
+   "Failed EGR valve",
+   "Failed EGR pressure (DPFE) sensor or cracked hoses",
+   "Vacuum supply problem to a vacuum EGR valve"
+  ],
+  "checks": [
+   "Inspect EGR hoses and vacuum lines",
+   "Command the EGR open with a scan tool (the idle should stumble)",
+   "Clean carbon from the EGR valve and passages"
+  ],
+  "notes": {
+   "Ford": "Pre-2008 Fords: the DPFE sensor and its rubber hoses are the classic cause. Replace the hoses and check the DPFE sensor first.",
+   "Honda": "Clogged EGR ports in the intake manifold are common (P1491 too).",
+   "Nissan": "EGR volume control valve and carbon."
+  }
+ },
+ "P0420": {
+  "sev": 1,
+  "what": "The catalytic converter on bank 1 isn't cleaning the exhaust as well as it should. The downstream oxygen sensor is switching almost as much as the upstream one.",
+  "causes": [
+   "Worn-out catalytic converter",
+   "Failing downstream (or upstream) oxygen sensor",
+   "Exhaust leak near the downstream O2 sensor",
+   "Engine misfire or rich running that damaged the converter",
+   "Oil or coolant burning in the engine"
+  ],
+  "checks": [
+   "Fix any misfire, fuel trim or O2 sensor codes first",
+   "Watch the downstream O2 sensor warm at 2500 RPM: a good converter gives a fairly steady 0.5-0.8 V; a switching signal means the converter is weak",
+   "Check for exhaust leaks before and around the downstream sensor",
+   "Aftermarket converters often trigger this again; use a CARB/OEM-grade one"
+  ],
+  "notes": {
+   "Toyota": "Very common on high-mileage Toyotas; check the A/F sensor and for oil burning before replacing the converter.",
+   "Subaru": "Very common; check the front A/F sensor and use an OEM converter.",
+   "Honda": "Common; confirm with the downstream O2 sensor.",
+   "Ford": "Check the downstream O2 sensors; on Mustangs, aftermarket X/H-pipes without converters set this."
+  }
+ },
+ "P0430": {
+  "sev": 1,
+  "same": "P0420",
+  "what": "Same as P0420 but on bank 2."
+ },
+ "P0440-P0441": {
+  "sev": 1,
+  "what": "A fault in the fuel vapor (EVAP) system: the purge flow or the system as a whole isn't working right. No effect on how the car drives.",
+  "causes": [
+   "Purge valve stuck or not opening",
+   "Cracked EVAP hoses",
+   "Failed charcoal canister or vent valve",
+   "Loose gas cap"
+  ],
+  "checks": [
+   "Check the gas cap",
+   "Inspect EVAP hoses at the canister and engine",
+   "Command the purge valve with a scan tool and listen for clicking"
+  ]
+ },
+ "P0442": {
+  "sev": 1,
+  "what": "A small fuel vapor leak (about 1 mm / 0.040 in) was found in the EVAP system. It doesn't affect driving.",
+  "causes": [
+   "Loose, worn or wrong gas cap (most common)",
+   "Cracked EVAP hose or loose connection",
+   "Leaking purge or vent valve",
+   "Leaking filler neck or charcoal canister"
+  ],
+  "checks": [
+   "Tighten or replace the gas cap (check the seal)",
+   "Inspect EVAP hoses near the tank and canister",
+   "A smoke test finds small leaks quickly",
+   "After fixing, the monitor can take several days of driving to run again"
+  ],
+  "notes": {
+   "Honda": "Honda also uses P1456/P1457 for the same kind of leak.",
+   "Ford": "Capless fillers: clean the filler neck flaps."
+  }
+ },
+ "P0446": {
+  "sev": 1,
+  "what": "The EVAP canister vent valve (which seals the system for leak testing) isn't working right.",
+  "causes": [
+   "Failed vent valve/solenoid",
+   "Clogged vent valve or filter (mud, spider webs)",
+   "Wiring fault"
+  ],
+  "checks": [
+   "Locate the vent valve near the canister or tank and check for dirt",
+   "Command it closed with a scan tool and listen",
+   "Check the connector"
+  ],
+  "notes": {
+   "GM": "Vent solenoids near the tank on trucks clog and fail often (also P0449/P0455).",
+   "Toyota": "Canister and vent valve are a common cause."
+  }
+ },
+ "P0455": {
+  "sev": 1,
+  "what": "A large fuel vapor leak (or no seal at all) in the EVAP system.",
+  "causes": [
+   "Gas cap missing or not tightened",
+   "Disconnected or split EVAP hose",
+   "Purge valve stuck open",
+   "Vent valve stuck open",
+   "Cracked canister"
+  ],
+  "checks": [
+   "Check the gas cap first",
+   "Look for disconnected hoses at the canister and purge valve",
+   "Smoke test"
+  ],
+  "notes": {
+   "GM": "Vent solenoid near the tank and purge solenoid on the engine are common.",
+   "Ford": "2011+ Ford: canister purge valve sticking open is common (hard start right after fueling is a hint)."
+  }
+ },
+ "P0456": {
+  "sev": 1,
+  "same": "P0442",
+  "what": "A very small fuel vapor leak (about 0.5 mm / 0.020 in) in the EVAP system. Usually the gas cap or a tiny hose crack; it doesn't affect driving."
+ },
+ "P0457": {
+  "sev": 1,
+  "what": "The EVAP system detected that the fuel cap is loose or missing.",
+  "causes": [
+   "Gas cap loose, missing or worn",
+   "Debris on the filler neck seal"
+  ],
+  "checks": [
+   "Tighten the cap until it clicks, or replace it",
+   "The code clears itself after several drive cycles once fixed"
+  ]
+ },
+ "P0496": {
+  "sev": 2,
+  "what": "Fuel vapor is being drawn into the engine when it shouldn't be: the purge valve is stuck open.",
+  "causes": [
+   "Purge valve stuck open (most common)",
+   "Purge valve wiring shorted"
+  ],
+  "checks": [
+   "Unplug the purge valve hose at idle: there should be no vacuum when it isn't commanded",
+   "Hard starting right after refueling is a classic symptom"
+  ],
+  "notes": {
+   "GM": "Very common on GM trucks and SUVs."
+  }
+ },
+ "P0500-P0503": {
+  "sev": 2,
+  "what": "The vehicle speed sensor signal is missing or wrong. The speedometer, shifting and ABS may act up.",
+  "causes": [
+   "Failed speed sensor",
+   "Wiring/connector fault",
+   "Wheel speed sensor problem on cars that use ABS sensors for speed"
+  ],
+  "checks": [
+   "Does the speedometer work?",
+   "Inspect the sensor and connector",
+   "Check ABS codes too"
+  ]
+ },
+ "P0505-P0507": {
+  "sev": 1,
+  "what": "The idle speed isn't what the engine computer wants.",
+  "causes": [
+   "Dirty throttle body or idle air control valve",
+   "Vacuum leak (high idle)",
+   "Failed idle air control valve"
+  ],
+  "checks": [
+   "Clean the throttle body",
+   "Check for vacuum leaks (high idle)",
+   "After cleaning, some cars need an idle relearn procedure"
+  ]
+ },
+ "P0520-P0524": {
+  "sev": 3,
+  "what": "The engine oil pressure is low, or the oil pressure sensor reading is out of range.",
+  "causes": [
+   "Low oil level",
+   "Failed oil pressure sensor (common)",
+   "Worn oil pump or engine bearings",
+   "Wrong oil viscosity"
+  ],
+  "checks": [
+   "Stop and check the oil level now",
+   "Check oil pressure with a mechanical gauge to tell a bad sensor from real low pressure",
+   "Don't drive if oil pressure is really low"
+  ],
+  "notes": {
+   "GM": "5.3/6.0 V8: the oil pressure sensor and its screen fail often.",
+   "Chrysler": "3.6 Pentastar and HEMI: oil pressure sensor/switch failures are common."
+  }
+ },
+ "P0562": {
+  "sev": 2,
+  "what": "The engine computer sees low system voltage.",
+  "causes": [
+   "Weak battery",
+   "Failing alternator",
+   "Loose or corroded battery cables or grounds",
+   "Parasitic drain"
+  ],
+  "checks": [
+   "Check battery voltage: about 12.6 V engine off, 13.8-14.7 V running",
+   "Clean and tighten battery terminals and engine grounds",
+   "Have the battery and alternator load-tested"
+  ],
+  "notes": {
+   "Chrysler": "Some 2008-2015 models: the TIPM (power distribution module) can cause electrical faults."
+  }
+ },
+ "P0563": {
+  "sev": 2,
+  "what": "System voltage is too high, usually an overcharging alternator.",
+  "causes": [
+   "Failed voltage regulator/alternator",
+   "Poor ground at the voltage sense"
+  ],
+  "checks": [
+   "Running voltage above about 15 V confirms it",
+   "Check grounds"
+  ]
+ },
+ "P0597-P0599": {
+  "sev": 1,
+  "what": "The electrically heated thermostat circuit has a fault.",
+  "causes": [
+   "Failed thermostat heater element",
+   "Wiring/connector fault"
+  ],
+  "checks": [
+   "Measure the heater resistance at the thermostat connector",
+   "Check for P0128"
+  ],
+  "notes": {
+   "BMW": "Very common; the thermostat is usually replaced as a unit."
+  }
+ },
+ "P0600-P0610": {
+  "sev": 2,
+  "what": "The engine computer found an internal problem.",
+  "causes": [
+   "Low or unstable battery voltage",
+   "Poor computer grounds",
+   "Water damage",
+   "Corrupt software",
+   "Failed computer"
+  ],
+  "checks": [
+   "Check battery and charging voltage and grounds first",
+   "Check for software updates (dealer reflash)",
+   "Only replace the computer after power and grounds test good"
+  ],
+  "notes": {
+   "Ford": "P0606 on Fords often comes with electronic throttle problems; check for TSBs and reflash."
+  }
+ },
+ "P0641-P0653": {
+  "sev": 2,
+  "what": "A 5 V reference circuit that feeds several sensors is shorted or open, which often sets codes for many sensors at once.",
+  "causes": [
+   "A shorted sensor pulling the reference down",
+   "Chafed wiring",
+   "Computer fault (rare)"
+  ],
+  "checks": [
+   "Unplug sensors on that reference one at a time; when the voltage comes back to 5 V, the last one unplugged is shorted"
+  ],
+  "match": "Reference Voltage"
+ },
+ "P0700": {
+  "sev": 2,
+  "what": "The transmission computer has stored its own trouble code and asked the engine computer to light the check-engine light. This code only says 'look in the transmission computer'.",
+  "causes": [
+   "Any transmission fault"
+  ],
+  "checks": [
+   "Read the codes from the transmission computer (TCM)",
+   "Check the transmission fluid level and condition"
+  ]
+ },
+ "P0705-P0709": {
+  "sev": 2,
+  "what": "The transmission range sensor (gear selector position) signal is wrong.",
+  "causes": [
+   "Misadjusted or failed range sensor",
+   "Wiring/connector fault"
+  ],
+  "checks": [
+   "Watch the selected gear in live data while moving the shifter",
+   "Inspect the connector at the transmission"
+  ]
+ },
+ "P0710-P0714": {
+  "sev": 2,
+  "what": "The transmission fluid temperature sensor reading is wrong or out of range.",
+  "causes": [
+   "Failed sensor (often part of the internal harness)",
+   "Wiring fault"
+  ],
+  "checks": [
+   "Compare transmission temp with coolant temp after a drive",
+   "Check the connector at the transmission"
+  ]
+ },
+ "P0715-P0723": {
+  "sev": 2,
+  "what": "A transmission speed sensor (input/turbine or output) signal is missing or erratic. Shifting may be harsh or erratic.",
+  "causes": [
+   "Failed speed sensor",
+   "Wiring/connector fault",
+   "Metal debris on a magnetic sensor"
+  ],
+  "checks": [
+   "Inspect the connector",
+   "Check the sensor resistance and for metal debris"
+  ]
+ },
+ "P0729-P0736": {
+  "sev": 3,
+  "what": "The transmission's actual gear ratio doesn't match the gear it commanded, meaning something is slipping.",
+  "causes": [
+   "Low or burnt transmission fluid",
+   "Worn clutches or bands",
+   "Faulty shift or pressure control solenoids",
+   "Valve body problem"
+  ],
+  "checks": [
+   "Check fluid level and condition (burnt smell, dark color)",
+   "Note which gear slips",
+   "Check for solenoid codes"
+  ],
+  "notes": {
+   "Ford": "6R80 (F-150, Expedition): a fluid change and valve body/solenoid body issues are common causes. 5R55S (2005-2010 Mustang): servo/band wear.",
+   "Honda": "Honda/Acura 5-speed automatics of the early 2000s had known clutch pack failures."
+  }
+ },
+ "P0740-P0744": {
+  "sev": 2,
+  "what": "The torque converter clutch (lockup) isn't working as commanded.",
+  "causes": [
+   "Failed TCC solenoid",
+   "Low or worn fluid",
+   "Worn torque converter clutch",
+   "Valve body wear"
+  ],
+  "checks": [
+   "Check fluid",
+   "Watch for RPM flaring at highway speed (TCC not locking)"
+  ],
+  "notes": {
+   "Nissan": "On CVTs, see also P17F0 (judder)."
+  }
+ },
+ "P0745-P0799": {
+  "sev": 2,
+  "what": "A transmission shift or pressure control solenoid has a fault. Shifting may be harsh or stuck in one gear (limp mode).",
+  "causes": [
+   "Failed solenoid",
+   "Internal transmission harness fault",
+   "Dirty or low fluid",
+   "Valve body problems"
+  ],
+  "checks": [
+   "Check fluid level and condition",
+   "Check the transmission connector for fluid or corrosion",
+   "Measure the solenoid resistance through the connector"
+  ],
+  "match": "Solenoid"
+ },
+ "P0840-P0878": {
+  "sev": 2,
+  "what": "A transmission fluid pressure sensor/switch reading is wrong.",
+  "causes": [
+   "Failed pressure switch (often part of the valve body)",
+   "Low fluid",
+   "Wiring fault"
+  ],
+  "checks": [
+   "Check fluid level",
+   "Check the connector"
+  ],
+  "notes": {
+   "GM": "6-speed automatics: the pressure switch manifold is a common failure."
+  },
+  "match": "Pressure Sensor"
+ },
+ "P0868": {
+  "sev": 3,
+  "what": "Transmission fluid pressure is low.",
+  "causes": [
+   "Low fluid",
+   "Worn pump",
+   "Internal leak"
+  ],
+  "checks": [
+   "Check fluid level now"
+  ]
+ },
+ "P0894": {
+  "sev": 3,
+  "what": "The transmission is slipping.",
+  "causes": [
+   "Low or burnt fluid",
+   "Worn clutches",
+   "Solenoid/valve body problems"
+  ],
+  "checks": [
+   "Check fluid level and condition"
+  ]
+ },
+ "P0A80": {
+  "sev": 2,
+  "what": "One or more blocks in the hybrid battery pack have weakened.",
+  "causes": [
+   "Aging hybrid battery modules",
+   "Clogged hybrid battery cooling fan/filter"
+  ],
+  "checks": [
+   "Clean the hybrid battery cooling fan intake (usually near the rear seat)",
+   "A hybrid battery test can identify weak blocks"
+  ],
+  "notes": {
+   "Toyota": "Very common on high-mileage Priuses and Camry hybrids."
+  }
+ },
+ "P2096-P2099": {
+  "sev": 1,
+  "what": "The downstream O2 sensor shows the fuel mixture after the converter is too lean or rich, and the computer's fine-tuning has hit its limit.",
+  "causes": [
+   "Exhaust leak (lean)",
+   "Aging upstream O2/A-F sensor",
+   "Failing catalytic converter",
+   "Fuel mixture problem"
+  ],
+  "checks": [
+   "Check for exhaust leaks",
+   "Check upstream sensor response and fuel trims"
+  ],
+  "notes": {
+   "Subaru": "Common with P0420 on Subarus.",
+   "Mazda": "Common on Mazda 3/6 with aging upstream sensors or exhaust leaks."
+  }
+ },
+ "P2100-P2119": {
+  "sev": 3,
+  "what": "The electronic throttle isn't responding as commanded. The car may go into reduced power (limp) mode.",
+  "causes": [
+   "Dirty or sticking throttle body",
+   "Failed throttle motor or throttle body",
+   "Wiring or connector fault",
+   "Accelerator pedal sensor fault"
+  ],
+  "checks": [
+   "Clean the throttle body (key off)",
+   "Check the connector",
+   "Some cars need a throttle relearn after cleaning"
+  ],
+  "notes": {
+   "Ford": "Ford ETC throttle bodies fail commonly (P2111/P2112/P2135); check for extended warranty/TSB coverage.",
+   "Toyota": "Also see Toyota P1120-P1129."
+  }
+ },
+ "P2135-P2140": {
+  "sev": 3,
+  "what": "The two signals from the throttle (or pedal) position sensor don't agree. The car often goes into reduced power mode.",
+  "causes": [
+   "Failed throttle body or pedal sensor",
+   "Corroded connector",
+   "Wiring fault"
+  ],
+  "checks": [
+   "Inspect the connectors at the throttle body and pedal",
+   "Watch both position signals in live data while pressing the pedal"
+  ]
+ },
+ "P2177-P2194": {
+  "sev": 2,
+  "same": "P0171",
+  "what": "The fuel mixture is too lean or rich at idle, off idle, or under load. Lean codes have the same causes as P0171, rich codes as P0172."
+ },
+ "P2195-P2198": {
+  "sev": 1,
+  "what": "The upstream O2 (air-fuel) sensor reads stuck lean or rich.",
+  "causes": [
+   "Aging O2/A-F sensor",
+   "Exhaust leak",
+   "Real lean/rich condition",
+   "Wiring fault"
+  ],
+  "checks": [
+   "Check fuel trims",
+   "Check for exhaust leaks before the sensor",
+   "Watch sensor response"
+  ]
+ },
+ "P2270-P2277": {
+  "sev": 1,
+  "what": "A downstream oxygen sensor (after the catalytic converter) has stayed lean or rich for too long when the computer expected it to change. 'Lean' means its voltage is stuck low.",
+  "causes": [
+   "Failing downstream O2 sensor (most common)",
+   "Exhaust leak before or near the sensor letting in outside air (makes it read lean)",
+   "Damaged sensor wiring touching the exhaust",
+   "The engine actually running lean or rich on that bank (check for P0171/P0174 or P0172/P0175)",
+   "Aftermarket exhaust without catalytic converters"
+  ],
+  "checks": [
+   "Watch the sensor in live data, warm, at a steady 2000-2500 RPM: a healthy downstream sensor sits around 0.5-0.8 V. One stuck near 0.0-0.1 V is reading lean",
+   "Snap the throttle or briefly add propane/brake cleaner near the intake: a working sensor jumps up toward 0.8-0.9 V",
+   "Check for exhaust leaks at the manifold, flex pipe and pipe joints ahead of the sensor",
+   "Inspect the sensor's connector and wiring along the exhaust",
+   "Check long-term fuel trim on that bank"
+  ],
+  "notes": {
+   "Ford": "Ford V8s: bank 1 is the passenger side, bank 2 the driver side. On 2005-2010 Mustang GTs, P2270/P2272 commonly come from aging downstream sensors or aftermarket exhaust (off-road X/H-pipes). If one O2 tile in the app reads a flat 0.00 V, that's probably the sensor this code is about."
+  }
+ },
+ "P2279": {
+  "sev": 2,
+  "same": "P0171",
+  "what": "An air leak in the intake was detected. Same causes and checks as P0171 (vacuum leak)."
+ },
+ "P2646-P2649": {
+  "sev": 2,
+  "what": "The variable valve lift system (rocker arm actuator) isn't working as commanded.",
+  "causes": [
+   "Low oil level or dirty oil",
+   "Failed VTEC/rocker arm oil pressure switch",
+   "Failed solenoid or clogged screen"
+  ],
+  "checks": [
+   "Check oil level and change the oil",
+   "Check the oil pressure switch and solenoid screen"
+  ],
+  "notes": {
+   "Honda": "K-series VTEC: the oil pressure switch and the solenoid gasket/screen are common fixes."
+  }
+ },
+ "P3400-P3497": {
+  "sev": 2,
+  "what": "The cylinder deactivation (fuel saver) system has a fault.",
+  "causes": [
+   "Low oil level or wrong oil",
+   "Failed deactivation solenoid (valve lifter oil manifold)",
+   "Collapsed or failed lifters"
+  ],
+  "checks": [
+   "Check oil level and use the specified oil",
+   "Listen for lifter tick",
+   "Check for misfire codes"
+  ],
+  "notes": {
+   "GM": "5.3/6.2 AFM/DFM: lifters and the valve lifter oil manifold (VLOM) are common failures.",
+   "Chrysler": "HEMI MDS lifters (see also P1521)."
+  }
+ },
+ "U0001-U0029": {
+  "sev": 2,
+  "what": "A problem with the network (CAN bus) that the car's computers use to talk to each other.",
+  "causes": [
+   "Weak battery or low voltage",
+   "Damaged or corroded wiring/connectors on the network",
+   "A module shorting the bus",
+   "Aftermarket accessories spliced into the network"
+  ],
+  "checks": [
+   "Check battery voltage and grounds",
+   "Measure resistance across OBD pins 6 and 14 with the battery disconnected (about 60 ohms is normal)",
+   "Unplug modules one at a time to find one pulling the bus down"
+  ]
+ },
+ "U0073-U0074": {
+  "same": "U0001-U0029",
+  "sev": 2,
+  "what": "A computer's network connection (communication bus) is turned off due to errors."
+ },
+ "U0100-U0300": {
+  "sev": 2,
+  "what": "One computer stopped hearing messages from another computer (named in the title).",
+  "causes": [
+   "The named module lost power or ground (check its fuses)",
+   "Weak battery or a voltage drop when cranking",
+   "Network wiring or connector fault",
+   "Failed module"
+  ],
+  "checks": [
+   "Check the named module's fuses, power and ground",
+   "Check battery voltage, especially while cranking",
+   "Clear codes and see if it returns; a single old U code after a battery change is often harmless"
+  ],
+  "notes": {
+   "Ford": "U0100 with stalling on Fords: check the PCM connectors and grounds.",
+   "Nissan": "Nissan uses U1000/U1001 for the same kind of fault."
+  },
+  "match": "Lost Communication"
+ },
+ "U0401-U0428": {
+  "sev": 2,
+  "what": "A computer received data from another module that is invalid or out of range.",
+  "causes": [
+   "A fault in the sending module (check it for codes)",
+   "Mismatched software after a module replacement",
+   "Low voltage"
+  ],
+  "checks": [
+   "Read codes from the sending module",
+   "Check battery voltage",
+   "Check for software updates"
+  ]
+ },
+ "C0035-C0050": {
+  "sev": 2,
+  "what": "A wheel speed sensor circuit has a fault. The ABS and traction control lights usually come on and those systems are turned off (normal brakes still work).",
+  "causes": [
+   "Failed wheel speed sensor",
+   "Damaged wiring near the wheel",
+   "Dirt or rust on the sensor or tone ring",
+   "Worn wheel bearing (integrated sensors)"
+  ],
+  "checks": [
+   "Inspect the sensor wiring at that wheel",
+   "Compare all four wheel speeds in a scan tool while driving slowly",
+   "Measure the sensor resistance if it's a passive sensor"
+  ]
+ },
+ "P1000": {
+  "sev": 1,
+  "only": [
+   "Ford",
+   "Mazda"
+  ],
+  "what": "Not a fault. The computer hasn't finished all its self-tests since the battery was disconnected or codes were cleared.",
+  "causes": [
+   "Recent battery disconnect or code clear"
+  ],
+  "checks": [
+   "Drive normally for several days, including some highway driving; it clears by itself"
+  ]
+ },
+ "P1131-P1152": {
+  "sev": 1,
+  "only": [
+   "Ford"
+  ],
+  "same": "P0171",
+  "what": "Ford: the upstream O2 sensor didn't switch as expected; it's stuck lean or rich, or the fuel correction hit its limit. Lean versions usually have the same causes as P0171 (vacuum leak, MAF, fuel pressure)."
+ },
+ "P1260": {
+  "sev": 3,
+  "only": [
+   "Ford",
+   "Mazda"
+  ],
+  "what": "The immobilizer didn't recognize the key, so the engine was disabled.",
+  "causes": [
+   "Unprogrammed or damaged key chip",
+   "Faulty transceiver ring around the ignition",
+   "Low battery"
+  ],
+  "checks": [
+   "Try a spare key",
+   "Check battery voltage",
+   "A dealer or locksmith can program keys"
+  ]
+ },
+ "P1285-P1299": {
+  "sev": 3,
+  "only": [
+   "Ford"
+  ],
+  "what": "Ford: the cylinder head is too hot (or its temperature sensor reads wrong). The engine may shut off cylinders to cool itself.",
+  "causes": [
+   "Low coolant or a leak",
+   "Failed thermostat, fan or water pump",
+   "Failed CHT sensor (for the circuit codes)"
+  ],
+  "checks": [
+   "Stop and check the coolant when cool",
+   "Check the cooling fan works",
+   "Compare CHT with coolant temp"
+  ]
+ },
+ "P1400-P1406": {
+  "sev": 1,
+  "only": [
+   "Ford"
+  ],
+  "same": "P0401",
+  "what": "Ford: the EGR pressure feedback (DPFE) sensor or its hoses have a fault."
+ },
+ "P1450": {
+  "sev": 1,
+  "only": [
+   "Ford",
+   "Mazda"
+  ],
+  "what": "The EVAP system pulled too much vacuum: usually a blocked vent or a stuck purge valve.",
+  "causes": [
+   "Blocked canister vent valve/filter",
+   "Purge valve stuck open",
+   "Kinked vent hose"
+  ],
+  "checks": [
+   "Inspect the vent valve near the tank for dirt or spider webs",
+   "Check the purge valve"
+  ]
+ },
+ "P1456-P1457": {
+  "sev": 1,
+  "only": [
+   "Honda"
+  ],
+  "same": "P0442",
+  "what": "Honda: EVAP leak, P1456 on the fuel tank side (start with the gas cap), P1457 on the canister side (often the canister vent shut valve)."
+ },
+ "P1281": {
+  "sev": 1,
+  "only": [
+   "Chrysler"
+  ],
+  "same": "P0128",
+  "what": "Chrysler: the engine took too long to warm up; usually the thermostat is stuck open."
+ },
+ "P1326": {
+  "sev": 3,
+  "only": [
+   "Hyundai-Kia"
+  ],
+  "what": "Hyundai/Kia's knock sensor system detected the vibration pattern of worn connecting rod bearings. The engine may limit power to protect itself.",
+  "causes": [
+   "Connecting rod bearing wear (Theta II and some other engines)"
+  ],
+  "checks": [
+   "Contact a Hyundai/Kia dealer: many engines with this code are covered by a recall/extended warranty",
+   "Avoid hard driving until checked",
+   "Check oil level"
+  ]
+ },
+ "P1491": {
+  "sev": 1,
+  "only": [
+   "Subaru"
+  ],
+  "what": "Subaru: the crankcase ventilation (PCV) system has a leak or fault.",
+  "causes": [
+   "Cracked or disconnected PCV hose",
+   "Failed PCV valve"
+  ],
+  "checks": [
+   "Inspect the PCV hoses for cracks or disconnection"
+  ]
+ },
+ "P1610-P1615": {
+  "sev": 3,
+  "only": [
+   "Nissan"
+  ],
+  "what": "Nissan's immobilizer (NATS) doesn't recognize the key or computer.",
+  "causes": [
+   "Unregistered or damaged key",
+   "Antenna ring fault",
+   "Replaced computer not programmed"
+  ],
+  "checks": [
+   "Try a spare key",
+   "A dealer or locksmith can register keys"
+  ]
+ },
+ "P1870": {
+  "sev": 2,
+  "only": [
+   "GM"
+  ],
+  "same": "P0894",
+  "what": "GM 4L60-E/4L65-E: the transmission is slipping, very often from a worn valve body (TCC regulator valve bore)."
+ },
+ "P1101": {
+  "sev": 2,
+  "only": [
+   "Ford"
+  ],
+  "same": "P0101",
+  "what": "Ford: the MAF sensor didn't pass its self-test. Same checks as P0101."
+ }
+}

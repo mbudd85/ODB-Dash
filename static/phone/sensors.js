@@ -27,6 +27,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -42,6 +43,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -57,6 +59,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -72,6 +75,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -87,6 +91,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -102,6 +107,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -117,6 +123,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -132,6 +139,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -147,6 +155,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -162,6 +171,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -177,6 +187,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -192,6 +203,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -207,6 +219,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -222,6 +235,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -237,6 +251,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -252,6 +267,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -267,6 +283,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -282,6 +299,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -297,6 +315,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -312,6 +331,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -327,6 +347,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -342,6 +363,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -357,6 +379,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -372,6 +395,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -387,6 +411,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -402,6 +427,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -417,6 +443,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -432,6 +459,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -447,6 +475,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -462,6 +491,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -477,6 +507,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -492,6 +523,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -507,6 +539,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -522,6 +555,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -537,6 +571,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -552,6 +587,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -567,6 +603,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -582,6 +619,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -597,6 +635,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -612,6 +651,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -627,6 +667,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -642,6 +683,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -657,6 +699,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 4
  },
  {
@@ -672,6 +715,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 4
  },
  {
@@ -687,6 +731,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 4
  },
  {
@@ -702,6 +747,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 4
  },
  {
@@ -717,6 +763,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 4
  },
  {
@@ -732,6 +779,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 4
  },
  {
@@ -747,6 +795,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 4
  },
  {
@@ -762,6 +811,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 4
  },
  {
@@ -777,6 +827,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -792,6 +843,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -807,6 +859,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -822,6 +875,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -837,6 +891,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -852,6 +907,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -867,6 +923,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -882,6 +939,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -897,6 +955,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -912,6 +971,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -927,6 +987,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -942,6 +1003,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -957,6 +1019,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -972,6 +1035,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -987,6 +1051,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -1002,6 +1067,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -1017,6 +1083,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -1032,6 +1099,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -1047,6 +1115,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -1062,6 +1131,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -1077,6 +1147,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -1092,6 +1163,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -1107,6 +1179,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -1122,6 +1195,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -1137,6 +1211,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -1152,6 +1227,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -1167,6 +1243,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -1182,6 +1259,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -1197,6 +1275,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -1212,6 +1291,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -1227,6 +1307,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -1242,6 +1323,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 1
  },
  {
@@ -1257,6 +1339,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 2
  },
  {
@@ -1272,6 +1355,7 @@ const OBD_SENSORS = [
   "make": "Standard",
   "verified": true,
   "note": "",
+  "fits": null,
   "nbytes": 4
  },
  {
@@ -1287,6 +1371,29 @@ const OBD_SENSORS = [
   "make": "Ford",
   "verified": false,
   "note": "Most widely shared Ford PID (6R80, 6F35, 6F50/55, 10R80). Fairly reliable.",
+  "fits": [
+   "expedition17",
+   "f150_16",
+   "make_ford"
+  ],
+  "nbytes": 2
+ },
+ {
+  "code": "ford_tft_pcm",
+  "name": "Transmission fluid temp (PCM)",
+  "unit": "°C",
+  "min": -40,
+  "max": 150,
+  "formula": "signed16(A*256+B)/16",
+  "cmd": "221E1C",
+  "header": "7E0",
+  "category": "Transmission",
+  "make": "Ford",
+  "verified": false,
+  "note": "For Fords whose engine computer also runs the automatic gearbox, e.g. 2005-2010 Mustang with the 5R55S. Same request as above, sent to the engine module. Unconfirmed. Manual gearboxes have no fluid temp sensor.",
+  "fits": [
+   "mustang07"
+  ],
   "nbytes": 2
  },
  {
@@ -1301,7 +1408,12 @@ const OBD_SENSORS = [
   "category": "Transmission",
   "make": "Ford",
   "verified": false,
-  "note": "Guess: commonly listed, but the value encoding differs between transmissions.",
+  "note": "Commonly listed for the 6R80; the value encoding can differ between transmissions.",
+  "fits": [
+   "expedition17",
+   "f150_16",
+   "make_ford"
+  ],
   "nbytes": 1
  },
  {
@@ -1316,8 +1428,51 @@ const OBD_SENSORS = [
   "category": "Engine",
   "make": "Ford",
   "verified": false,
-  "note": "Guess: reported on some 2011+ models.",
+  "note": "Guess: reported on many 2011+ Ford trucks.",
+  "fits": [
+   "expedition17",
+   "f150_16",
+   "make_ford"
+  ],
   "nbytes": 1
+ },
+ {
+  "code": "ford_oil_temp",
+  "name": "Engine oil temp (PCM)",
+  "unit": "°C",
+  "min": -40,
+  "max": 160,
+  "formula": "A-40",
+  "cmd": "221310",
+  "header": "7E0",
+  "category": "Engine",
+  "make": "Ford",
+  "verified": false,
+  "note": "Guess: shared by F-150 owners. Try the standard \"Engine oil temp\" first; many 2011+ Fords report it.",
+  "fits": [
+   "expedition17",
+   "f150_16"
+  ],
+  "nbytes": 1
+ },
+ {
+  "code": "ford_oar",
+  "name": "Octane adjust ratio (EcoBoost)",
+  "unit": "",
+  "min": -1,
+  "max": 1,
+  "formula": "signed16(A*256+B)/16384",
+  "cmd": "2203E8",
+  "header": "7E0",
+  "category": "Engine",
+  "make": "Ford",
+  "verified": false,
+  "note": "Guess, from EcoBoost tuning forums. -1 = fully adapted to good fuel, toward +1 = pulling timing for bad fuel or knock. No reply on a 5.0.",
+  "fits": [
+   "expedition17",
+   "f150_16"
+  ],
+  "nbytes": 2
  },
  {
   "code": "ford_odometer",
@@ -1332,6 +1487,10 @@ const OBD_SENSORS = [
   "make": "Ford",
   "verified": false,
   "note": "Commonly listed for 2010+ Ford PCMs.",
+  "fits": [
+   "expedition17",
+   "f150_16"
+  ],
   "nbytes": 3
  },
  {
@@ -1346,7 +1505,127 @@ const OBD_SENSORS = [
   "category": "Electrical",
   "make": "Ford",
   "verified": false,
-  "note": "Guess: from the body module on cars with battery monitoring (e.g. F-150, Focus).",
+  "note": "Guess: from the body module on vehicles with battery monitoring (e.g. F-150).",
+  "fits": [
+   "expedition17",
+   "f150_16"
+  ],
+  "nbytes": 1
+ },
+ {
+  "code": "ford_tpms_lf",
+  "name": "Tire pressure, left front",
+  "unit": "kPa",
+  "min": 0,
+  "max": 400,
+  "formula": "(A*256+B+22)/3",
+  "cmd": "222813",
+  "header": "726",
+  "category": "Tires",
+  "make": "Ford",
+  "verified": false,
+  "note": "Widely shared Torque PID for 2011+ F-150/Expedition (body module). Reads 0 or no reply until the sensors have transmitted (drive a little).",
+  "fits": [
+   "expedition17",
+   "f150_16",
+   "make_ford"
+  ],
+  "nbytes": 2
+ },
+ {
+  "code": "ford_tpms_rf",
+  "name": "Tire pressure, right front",
+  "unit": "kPa",
+  "min": 0,
+  "max": 400,
+  "formula": "(A*256+B+22)/3",
+  "cmd": "222814",
+  "header": "726",
+  "category": "Tires",
+  "make": "Ford",
+  "verified": false,
+  "note": "See left front.",
+  "fits": [
+   "expedition17",
+   "f150_16",
+   "make_ford"
+  ],
+  "nbytes": 2
+ },
+ {
+  "code": "ford_tpms_rr",
+  "name": "Tire pressure, right rear",
+  "unit": "kPa",
+  "min": 0,
+  "max": 400,
+  "formula": "(A*256+B+22)/3",
+  "cmd": "222815",
+  "header": "726",
+  "category": "Tires",
+  "make": "Ford",
+  "verified": false,
+  "note": "See left front.",
+  "fits": [
+   "expedition17",
+   "f150_16",
+   "make_ford"
+  ],
+  "nbytes": 2
+ },
+ {
+  "code": "ford_tpms_lr",
+  "name": "Tire pressure, left rear",
+  "unit": "kPa",
+  "min": 0,
+  "max": 400,
+  "formula": "(A*256+B+22)/3",
+  "cmd": "222816",
+  "header": "726",
+  "category": "Tires",
+  "make": "Ford",
+  "verified": false,
+  "note": "See left front.",
+  "fits": [
+   "expedition17",
+   "f150_16",
+   "make_ford"
+  ],
+  "nbytes": 2
+ },
+ {
+  "code": "gm_tft_7e2",
+  "name": "Transmission fluid temp (TCM 7E2)",
+  "unit": "°C",
+  "min": -40,
+  "max": 150,
+  "formula": "A-40",
+  "cmd": "221940",
+  "header": "7E2",
+  "category": "Transmission",
+  "make": "GM",
+  "verified": false,
+  "note": "Widely shared among Chevy/GMC truck owners (Torque Pro lists) for 2007+ trucks with a separate transmission module. Did NOT work on a 2009 Holden VE (justcommodores.com), so it varies by vehicle.",
+  "fits": [
+   "make_gm"
+  ],
+  "nbytes": 1
+ },
+ {
+  "code": "gm_tft_7e0",
+  "name": "Transmission fluid temp (ECM 7E0)",
+  "unit": "°C",
+  "min": -40,
+  "max": 150,
+  "formula": "A-40",
+  "cmd": "221940",
+  "header": "7E0",
+  "category": "Transmission",
+  "make": "GM",
+  "verified": false,
+  "note": "Same request sent to the engine module, for older GM trucks (about 1999-2006) whose engine computer runs the transmission. Unconfirmed.",
+  "fits": [
+   "make_gm"
+  ],
   "nbytes": 1
  },
  {
@@ -1361,7 +1640,11 @@ const OBD_SENSORS = [
   "category": "Transmission",
   "make": "Mazda",
   "verified": false,
-  "note": "Guess: same address as Ford. Works on some Ford-shared Mazdas; Skyactiv-Drive cars may use a different one.",
+  "note": "Guess: same address as Ford. 2009-2013 Mazda 6 shares a lot with Ford. Works on some Ford-shared Mazdas; Skyactiv-Drive cars may use a different one.",
+  "fits": [
+   "mazda6_12",
+   "make_mazda"
+  ],
   "nbytes": 2
  },
  {
@@ -1376,7 +1659,193 @@ const OBD_SENSORS = [
   "category": "Transmission",
   "make": "Mazda",
   "verified": false,
-  "note": "Guess: alternative address reported by some Skyactiv owners.",
+  "note": "Guess: alternative address reported by some Skyactiv owners (2014+). Not expected on a 2012 Mazda 6.",
+  "fits": [
+   "make_mazda"
+  ],
   "nbytes": 1
+ },
+ {
+  "code": "ram_tft_b010",
+  "name": "Transmission fluid temp (68RFE)",
+  "unit": "°C",
+  "min": -40,
+  "max": 150,
+  "formula": "((A*256+B)/64-32)/1.8",
+  "cmd": "22B010",
+  "header": null,
+  "category": "Transmission",
+  "make": "Ram",
+  "verified": false,
+  "note": "One owner of a 2016 Ram 2500 6.7 Cummins reported it working in Torque Pro (ramforum.com), posted in °F as ((A*256)+B)/64 with the header on auto. A 2012 Ram 2500 owner couldn't get it to work.",
+  "fits": [
+   "make_ram"
+  ],
+  "nbytes": 2
+ },
+ {
+  "code": "toyota_atf_pan_tf1",
+  "name": "Transmission fluid temp (pan)",
+  "unit": "°C",
+  "min": -40,
+  "max": 170,
+  "formula": "A-40+B/287",
+  "cmd": "221627",
+  "header": "701",
+  "category": "Transmission",
+  "make": "Toyota",
+  "verified": false,
+  "note": "Reported working on 2016+ Tacoma V6 automatics (header 701, 2-3 owners on tacomaworld.com, transmission temperature PID thread). Not working on the 4-cylinder per one owner. Converted from the posted °F equation (A*459/255)+(B*1.6/255)-40.",
+  "fits": [
+   "make_toyota"
+  ],
+  "nbytes": 2
+ },
+ {
+  "code": "toyota_atf_conv_tf2",
+  "name": "Transmission fluid temp (after converter)",
+  "unit": "°C",
+  "min": -40,
+  "max": 170,
+  "formula": "A-40+B/287",
+  "cmd": "221628",
+  "header": "701",
+  "category": "Transmission",
+  "make": "Toyota",
+  "verified": false,
+  "note": "Same source as the pan sensor: 2016+ Tacoma V6, header 701. Unverified elsewhere.",
+  "fits": [
+   "make_toyota"
+  ],
+  "nbytes": 2
+ },
+ {
+  "code": "toyota_atf_2182_cd",
+  "name": "Transmission fluid temp (2182, converter)",
+  "unit": "°C",
+  "min": -40,
+  "max": 170,
+  "formula": "(((C*256+D)*7/100-400)/10-32)/1.8",
+  "cmd": "2182",
+  "header": "7E1",
+  "category": "Transmission",
+  "make": "Toyota",
+  "verified": false,
+  "note": "One owner (2018 Tacoma 2.6 I4 automatic, tacomaworld.com) posted ((C*256+D)*(7/100)-400)/10 in °F with no header given; 7E1 (transmission) is assumed here. Didn't work for a V6 owner. If it reads strangely, the original may have been °C.",
+  "fits": [
+   "make_toyota"
+  ],
+  "nbytes": 4
+ },
+ {
+  "code": "lexus_atf_2182",
+  "name": "Transmission fluid temp (Lexus ES, 2182)",
+  "unit": "°C",
+  "min": -40,
+  "max": 170,
+  "formula": "(((A*256+B)*84/1000-480)/12-32)/1.8",
+  "cmd": "2182",
+  "header": "7E1",
+  "category": "Transmission",
+  "make": "Toyota",
+  "verified": false,
+  "note": "One owner of a 2013-2018 Lexus ES (clublexus.com) reported it accurate, posted in °F: ((A*256+B)*(84/1000)-480)/12, header 7E1.",
+  "fits": [
+   "make_toyota"
+  ],
+  "nbytes": 2
  }
 ];
+const OBD_PROFILES = [
+ {
+  "id": "expedition17",
+  "name": "2017 Ford Expedition EL Limited",
+  "make": "Ford",
+  "about": "3.5 EcoBoost, 6R80 6-speed automatic (separate transmission module, 7E1)."
+ },
+ {
+  "id": "f150_16",
+  "name": "2016 Ford F-150 Platinum",
+  "make": "Ford",
+  "about": "3.5 EcoBoost or 5.0 V8, 6R80 6-speed automatic (7E1). EcoBoost-only sensors give no reply on a 5.0."
+ },
+ {
+  "id": "mustang07",
+  "name": "2007 Ford Mustang GT",
+  "make": "Ford",
+  "about": "4.6 3V V8. The automatic (5R55S) is run by the engine computer (7E0); manual cars have no transmission sensors. Older Ford computer, so far fewer factory sensors."
+ },
+ {
+  "id": "mazda6_12",
+  "name": "2012 Mazda 6",
+  "make": "Mazda",
+  "about": "2.5 MZR or 3.7 V6, pre-Skyactiv. Mazda publishes almost nothing, so factory sensors are few."
+ },
+ {
+  "id": "make_ford",
+  "name": "Other Ford / Lincoln / Mercury",
+  "make": "Ford",
+  "about": "Any other Ford. Shows the most widely shared Ford factory sensors; use \"Check factory sensors\" to see which answer."
+ },
+ {
+  "id": "make_mazda",
+  "name": "Other Mazda",
+  "make": "Mazda",
+  "about": "Any other Mazda. Mazda factory sensors are few and unverified."
+ },
+ {
+  "id": "make_gm",
+  "name": "Chevrolet / GMC (any model)",
+  "make": "Chevrolet",
+  "about": "Factory sensors from owner forums, unverified. Trouble codes use GM meanings."
+ },
+ {
+  "id": "make_ram",
+  "name": "Ram / Dodge / Jeep / Chrysler (any model)",
+  "make": "Ram",
+  "about": "Factory sensors from owner forums, unverified. Trouble codes use Chrysler meanings."
+ },
+ {
+  "id": "make_toyota",
+  "name": "Toyota / Lexus (any model)",
+  "make": "Toyota",
+  "about": "Factory sensors from owner forums (Tacoma, Lexus ES), unverified. Trouble codes use Toyota meanings."
+ },
+ {
+  "id": "make_honda",
+  "name": "Honda / Acura (any model)",
+  "make": "Honda",
+  "about": "No reliable public factory sensors yet; standard sensors and Honda trouble code meanings work."
+ },
+ {
+  "id": "make_hyundai",
+  "name": "Hyundai / Kia (any model)",
+  "make": "Hyundai",
+  "about": "No reliable public factory sensors yet; standard sensors and Hyundai/Kia trouble code meanings work."
+ },
+ {
+  "id": "make_nissan",
+  "name": "Nissan / Infiniti (any model)",
+  "make": "Nissan",
+  "about": "No reliable public factory sensors yet; standard sensors and Nissan trouble code meanings work."
+ },
+ {
+  "id": "make_subaru",
+  "name": "Subaru (any model)",
+  "make": "Subaru",
+  "about": "No reliable public factory sensors yet; standard sensors and Subaru trouble code meanings work."
+ },
+ {
+  "id": "make_vw",
+  "name": "Volkswagen / Audi (any model)",
+  "make": "Volkswagen",
+  "about": "VW factory data needs VW's own protocols (VCDS/OBDeleven). Standard sensors and trouble code meanings work."
+ },
+ {
+  "id": "make_bmw",
+  "name": "BMW / Mini (any model)",
+  "make": "BMW",
+  "about": "BMW factory data needs BMW's own protocols (ISTA/INPA). Standard sensors and trouble code meanings work."
+ }
+];
+const OBD_PID_LENGTHS = {"01": 4, "02": 2, "03": 2, "04": 1, "05": 1, "06": 1, "07": 1, "08": 1, "09": 1, "0A": 1, "0B": 1, "0C": 2, "0D": 1, "0E": 1, "0F": 1, "10": 2, "11": 1, "12": 1, "13": 1, "14": 2, "15": 2, "16": 2, "17": 2, "18": 2, "19": 2, "1A": 2, "1B": 2, "1C": 1, "1D": 1, "1E": 1, "1F": 2, "21": 2, "22": 2, "23": 2, "24": 4, "25": 4, "26": 4, "27": 4, "28": 4, "29": 4, "2A": 4, "2B": 4, "2C": 1, "2D": 1, "2E": 1, "2F": 1, "30": 1, "31": 2, "32": 2, "33": 1, "34": 4, "35": 4, "36": 4, "37": 4, "38": 4, "39": 4, "3A": 4, "3B": 4, "3C": 2, "3D": 2, "3E": 2, "3F": 2, "41": 4, "42": 2, "43": 2, "44": 2, "45": 1, "46": 1, "47": 1, "48": 1, "49": 1, "4A": 1, "4B": 1, "4C": 1, "4D": 2, "4E": 2, "4F": 4, "50": 4, "51": 1, "52": 1, "53": 2, "54": 2, "55": 2, "56": 2, "57": 2, "58": 2, "59": 2, "5A": 1, "5B": 1, "5C": 1, "5D": 2, "5E": 2, "5F": 1, "61": 1, "62": 1, "63": 2, "65": 2};
