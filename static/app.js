@@ -8,7 +8,7 @@ const state = {
   pids: {},             // code -> {code,name,unit,min,max,category}
   dashboards: [],
   active: null,
-  units: localStorage.getItem("units") || "metric",
+  units: localStorage.getItem("units") || "imperial",
   editing: false,
   supported: null,      // Set of codes the car reports, null until known
   vehicle: null,        // chosen vehicle profile id
@@ -65,6 +65,44 @@ function defaultDashboards() {
   ];
 }
 
+// ---------------------------------------------------------------- Realtime screen
+
+// The "Realtime" button's screen: digital readouts of the everyday numbers.
+const REALTIME_ID = "realtime";
+const TRANS_TEMP_FOR = { mustang07: "ford_tft_pcm", expedition17: "ford_tft", f150_16: "ford_tft", mazda6_12: "mazda_atf_temp" };
+const TRANS_TEMP_CODES = ["ford_tft", "ford_tft_pcm", "mazda_atf_temp", "mazda_atf_temp_alt"];
+// No known OBD2 address reads oil pressure on these cars (most only have an on/off pressure
+// switch), so this tile says N/A. Swap it for a custom sensor if you find one that works.
+const NA_SENSORS = [{ code: "NA_OIL_PRESSURE", name: "Oil pressure", unit: "kPa", min: 0, max: 700, make: "Not available",
+  category: "Engine", na: true, note: "No known OBD2 oil pressure sensor for this vehicle." }];
+const transTempCode = () => TRANS_TEMP_FOR[state.vehicle] || "ford_tft";
+
+function realtimeDashboard() {
+  const n = (code, extra = {}) => ({ id: uid(), code, type: "number", size: 1, ...extra });
+  return { id: REALTIME_ID, name: "Realtime", widgets: [
+    n("RV"), n("05", { warn: 105 }), n(transTempCode(), { warn: 110 }),
+    n("0D"), n("0C", { warn: 6000 }), n("CALC_MPG"),
+    n("2F"), n("NA_OIL_PRESSURE"), n("0F"),
+  ]};
+}
+// Add the Realtime screen once (first in the list, also after updating the app). It's an
+// ordinary dashboard after that: edit, rename or delete it like any other. Its transmission
+// temperature tile follows the chosen vehicle.
+function ensureRealtime() {
+  let rt = state.dashboards.find((d) => d.id === REALTIME_ID);
+  if (!rt) {
+    let added = false;
+    try { added = localStorage.getItem("realtimeAdded") === "1"; } catch {}
+    if (added) return;
+    state.dashboards.unshift(realtimeDashboard());
+    try { localStorage.setItem("realtimeAdded", "1"); } catch {}
+    save();
+    return;
+  }
+  const tile = rt.widgets.find((w) => TRANS_TEMP_CODES.includes(w.code));
+  if (tile && tile.code !== transTempCode() && state.vehicle) { tile.code = transTempCode(); save(); }
+}
+
 async function loadDashboards() {
   let data = null;
   try { data = await (await fetch("api/dashboards")).json(); } catch {}
@@ -73,6 +111,7 @@ async function loadDashboards() {
   if (fresh) data = { dashboards: defaultDashboards() };
   state.dashboards = data.dashboards;
   if (fresh) save();   // so the server knows what to auto-record before you edit anything
+  ensureRealtime();
   state.active = localStorage.getItem("activeDash");
   if (state.active !== ALL && !state.dashboards.find((d) => d.id === state.active)) state.active = state.dashboards[0].id;
 }
@@ -92,6 +131,7 @@ function save() {
 // Factory (mode 22) sensors: what "Check factory sensors" found, else whether it fits the chosen vehicle.
 const isSupported = (code) => {
   const p = state.pids[code];
+  if (p?.na) return false;
   if (!p || p.make === "Standard") return !state.supported || state.supported.has(code);
   if (p.make === "Calculated" || p.make === "Custom") return true;
   if (code in state.checked) return state.checked[code];
@@ -124,6 +164,9 @@ const allCodes = () => Object.keys(state.pids).filter(isSupported);
 
 function subscribe() {
   if (state.ws?.readyState !== WebSocket.OPEN) return;
+  // Home screen: only RPM and speed, so the big gauge updates as fast as the adapter allows.
+  if (document.body.classList.contains("home")) return state.ws.send(JSON.stringify({ type: "subscribe", codes: ["0C", "0D"] }));
+  if (!state.dashboards.length) return;
   const codes = state.active === ALL ? allCodes() : [...new Set(activeDash().widgets.map((w) => w.code))];
   state.ws.send(JSON.stringify({ type: "subscribe", codes }));
 }
@@ -227,7 +270,7 @@ function renderGrid() {
         <button data-a="edit" title="Edit">⚙</button>
         <button data-a="del" title="Remove">✕</button>
       </div>`;
-    el.querySelector(".title").textContent = info.make !== "Standard" ? `${info.name} · ${info.make}` : info.name;
+    el.querySelector(".title").textContent = info.make !== "Standard" && !info.na ? `${info.name} · ${info.make}` : info.name;
     el.querySelector(".title").title = info.note || "";
     el.querySelector(".tools").onclick = (e) => {
       const a = e.target.dataset.a;
@@ -242,7 +285,7 @@ function renderGrid() {
     note.className = "note";
     if (!isSupported(w.code)) {
       el.classList.add("unsupported");
-      note.textContent = "Not reported by this car";
+      note.textContent = info.na ? "No known sensor for this car" : "Not reported by this car";
     }
     el.append(note);
     grid.append(el);
@@ -272,6 +315,8 @@ function renderGrid() {
         if (smooth && raw != null && shown != null) { target = raw; return; }
         shown = target = raw;
         view(raw);
+        // A readout this car doesn't have: say N/A instead of a dash.
+        if (raw == null && w.type === "number" && el.classList.contains("unsupported")) body.querySelector(".value").textContent = "N/A";
       },
     });
     state.widgets.get(w.id).update();
@@ -700,7 +745,9 @@ $("#vehicleSel").onchange = async (e) => {
     body: JSON.stringify({ id: e.target.value || null }) });
   await loadVehicles(await r.json());
   $("#probeOut").textContent = "";
+  ensureRealtime();
   renderGrid();
+  subscribe();
 };
 $("#probeBtn").onclick = async () => {
   const out = $("#probeOut");
@@ -769,7 +816,7 @@ async function loadCustom() {
 async function reloadPids() {
   const pids = await (await fetch("api/pids")).json();
   state.pids = {};
-  for (const p of pids) state.pids[p.code] = p;
+  for (const p of [...pids, ...NA_SENSORS]) state.pids[p.code] = p;
   nameO2Sensors();
 }
 
@@ -961,7 +1008,7 @@ async function renderTrips() {
 
 (async function init() {
   const pids = await (await fetch("api/pids")).json();
-  for (const p of pids) state.pids[p.code] = p;
+  for (const p of [...pids, ...NA_SENSORS]) state.pids[p.code] = p;
   try { await loadVehicles(); } catch {}
   await loadDashboards();
   renderTabs();
