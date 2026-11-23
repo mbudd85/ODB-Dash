@@ -192,19 +192,89 @@ class Elm327 {
     return s ? this.readSensor(s) : null;
   }
 
-  async readSensor(s) {
+  // The module header and command used to read one sensor.
+  request(s) {
     let cmd = s.cmd, header = s.header;
     if (this.can) {
       if (s.standard) header = "7E0";                          // ask only the engine computer, so one reply
       if (cmd.length / 2 + s.decode.nbytes <= 7) cmd += "1";   // "expect 1 reply": answer comes back at once
     }
+    return { header, cmd };
+  }
+
+  decodeReply(s, reply) {
+    const data = parseReply(reply, s.replyPrefix);
+    if (!data || data.length < s.decode.nbytes) return null;
+    return round3(s.decode(data));
+  }
+
+  // Send several requests back to back. A transport with sendMany (the Android app) gets
+  // them all in one call. header undefined = keep the current one. null reply = timed out.
+  batch(reqs, timeoutMs = 5000) {
+    return this._locked(async () => {
+      const cmds = [], slot = [];
+      let h = this.header;
+      for (const r of reqs) {
+        if (r.header !== undefined && r.header !== h) { cmds.push("ATSH" + (r.header || "7DF")); h = r.header; }
+        slot.push(cmds.length);
+        cmds.push(r.cmd);
+      }
+      let replies;
+      if (this.t.sendMany) replies = await this.t.sendMany(cmds, timeoutMs);
+      else {
+        replies = [];
+        for (const c of cmds) {
+          try { replies.push(await this.t.send(c, timeoutMs)); }
+          catch (e) { if (!e.timeout) throw e; replies.push(null); }
+        }
+      }
+      // After a timeout we can't be sure which header the adapter took; set it again next time.
+      this.header = replies.some((r) => r == null) ? "?" : h;
+      return slot.map((i) => replies[i]);
+    });
+  }
+
+  // One polling pass: every sensor in `codes` (and RV), as few requests and app round trips
+  // as possible. Returns { values, timeouts, requests }.
+  async readCycle(codes) {
+    const sensors = codes.map((c) => this.registry.get(c)).filter(Boolean);
+    const multi = this.can && this.multiOk ? sensors.filter((s) => s.standard && s.code in OBD_PID_LENGTHS) : [];
+    const reqs = [];
+    for (let i = 0; i < multi.length; i += 6) {
+      const group = multi.slice(i, i + 6);
+      if (group.length === 1) { reqs.push({ ...this.request(group[0]), sensor: group[0] }); continue; }
+      const size = 1 + group.reduce((n, s) => n + 1 + OBD_PID_LENGTHS[s.code], 0);
+      const frames = size <= 7 ? 1 : 1 + Math.ceil((size - 6) / 7);
+      reqs.push({ header: "7E0", cmd: "01" + group.map((s) => s.code).join("") + (frames <= 15 ? frames.toString(16).toUpperCase() : ""), group });
+    }
+    for (const s of sensors) if (!multi.includes(s)) reqs.push({ ...this.request(s), sensor: s });
+    if (codes.includes("RV")) reqs.push({ header: undefined, cmd: "ATRV", rv: true });
+    const replies = reqs.length ? await this.batch(reqs) : [];
+    const values = {};
+    let timeouts = 0;
+    reqs.forEach((r, i) => {
+      const reply = replies[i];
+      const codesOf = r.group ? r.group.map((s) => s.code) : [r.rv ? "RV" : r.sensor.code];
+      if (reply == null) { timeouts++; for (const c of codesOf) values[c] = null; return; }
+      if (r.group) {
+        const got = parseMulti(reply, Object.fromEntries(r.group.map((s) => [s.code, s])));
+        if (!Object.keys(got).length) this.multiOk = false;   // not answered: one at a time from the next pass
+        for (const c of codesOf) values[c] = got[c] ?? null;
+      } else if (r.rv) {
+        const m = reply.match(/(\d+(?:\.\d+)?)\s*V/);
+        values.RV = m ? parseFloat(m[1]) : null;
+      } else values[r.sensor.code] = this.decodeReply(r.sensor, reply);
+    });
+    return { values, timeouts, requests: reqs.length };
+  }
+
+  async readSensor(s) {
+    const { header, cmd } = this.request(s);
     const reply = await this._locked(async () => {
       await this.setHeader(header);
       return this.t.send(cmd);
     });
-    const data = parseReply(reply, s.replyPrefix);
-    if (!data || data.length < s.decode.nbytes) return null;
-    return round3(s.decode(data));
+    return this.decodeReply(s, reply);
   }
 
   // Several mode 01 PIDs, up to 6 per request on CAN cars (much faster than one by one).

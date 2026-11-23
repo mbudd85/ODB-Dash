@@ -22,6 +22,14 @@
         throw new Error(e?.message || String(e));
       }
     }
+    // Many commands in one trip to the app; replies[i] is null if command i timed out.
+    async sendMany(cmds, timeoutMs = 5000) {
+      try {
+        return (await call("sendMany", { cmds, timeout: timeoutMs })).replies;
+      } catch (e) {
+        throw new Error(e?.message || String(e));
+      }
+    }
   }
   window.OBDNativeTcp = NativeTcpTransport;
 

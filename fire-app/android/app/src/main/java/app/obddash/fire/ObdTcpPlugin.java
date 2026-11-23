@@ -11,13 +11,13 @@ import android.os.Build;
 import android.os.Environment;
 import android.provider.MediaStore;
 
+import com.getcapacitor.JSArray;
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
 import com.getcapacitor.PluginCall;
 import com.getcapacitor.PluginMethod;
 import com.getcapacitor.annotation.CapacitorPlugin;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -28,6 +28,8 @@ import java.net.SocketTimeoutException;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+
+import org.json.JSONObject;
 
 /**
  * Raw TCP link to an ELM327 WiFi adapter (e.g. Veepeak at 192.168.0.10:35000).
@@ -40,6 +42,7 @@ public class ObdTcpPlugin extends Plugin {
     private Socket socket;
     private InputStream in;
     private OutputStream out;
+    private final byte[] chunk = new byte[512];
 
     @PluginMethod
     public void open(PluginCall call) {
@@ -69,36 +72,76 @@ public class ObdTcpPlugin extends Plugin {
         String cmd = call.getString("cmd", "");
         int timeout = call.getInt("timeout", 5000);
         io.execute(() -> {
-            if (socket == null) {
-                call.reject("not connected");
-                return;
-            }
             try {
-                // Throw away anything left over from an earlier, timed-out command.
-                while (in.available() > 0) in.read();
-                out.write((cmd + "\r").getBytes(StandardCharsets.US_ASCII));
-                out.flush();
-                ByteArrayOutputStream buf = new ByteArrayOutputStream();
-                long deadline = System.currentTimeMillis() + timeout;
-                while (true) {
-                    long left = deadline - System.currentTimeMillis();
-                    if (left <= 0) throw new SocketTimeoutException();
-                    socket.setSoTimeout((int) Math.max(1, left));
-                    int b = in.read();
-                    if (b < 0) throw new java.io.EOFException("the adapter closed the connection");
-                    if (b == '>') break;
-                    if (b != 0) buf.write(b);
+                String reply = exchange(cmd, timeout);
+                if (reply == null) {
+                    call.reject("timeout", "TIMEOUT");
+                    return;
                 }
                 JSObject ret = new JSObject();
-                ret.put("reply", buf.toString("US-ASCII"));
+                ret.put("reply", reply);
                 call.resolve(ret);
-            } catch (SocketTimeoutException e) {
-                call.reject("timeout", "TIMEOUT");
             } catch (Exception e) {
                 closeQuietly();
                 call.reject(e.getMessage() != null ? e.getMessage() : e.toString());
             }
         });
+    }
+
+    /**
+     * Several commands in one call: one trip between the page and the app per polling pass
+     * instead of one per command (each trip waits for the screen's UI thread, which is slow
+     * on Fire tablets). replies[i] is null when command i timed out.
+     */
+    @PluginMethod
+    public void sendMany(PluginCall call) {
+        JSArray cmds = call.getArray("cmds", new JSArray());
+        int timeout = call.getInt("timeout", 5000);
+        io.execute(() -> {
+            try {
+                JSArray replies = new JSArray();
+                for (int i = 0; i < cmds.length(); i++) {
+                    String reply = exchange(cmds.getString(i), timeout);
+                    replies.put(reply == null ? JSONObject.NULL : reply);
+                }
+                JSObject ret = new JSObject();
+                ret.put("replies", replies);
+                call.resolve(ret);
+            } catch (Exception e) {
+                closeQuietly();
+                call.reject(e.getMessage() != null ? e.getMessage() : e.toString());
+            }
+        });
+    }
+
+    /** Write one command, read up to the ">" prompt. null = no prompt within the timeout. */
+    private String exchange(String cmd, int timeout) throws java.io.IOException {
+        if (socket == null) throw new java.io.IOException("not connected");
+        // Throw away anything left over from an earlier, timed-out command.
+        while (in.available() > 0) {
+            if (in.read(chunk, 0, Math.min(chunk.length, in.available())) < 0) break;
+        }
+        out.write((cmd + "\r").getBytes(StandardCharsets.US_ASCII));
+        out.flush();
+        StringBuilder buf = new StringBuilder();
+        long deadline = System.currentTimeMillis() + timeout;
+        while (true) {
+            long left = deadline - System.currentTimeMillis();
+            if (left <= 0) return null;
+            socket.setSoTimeout((int) Math.max(1, left));
+            int n;
+            try {
+                n = in.read(chunk);
+            } catch (SocketTimeoutException e) {
+                return null;
+            }
+            if (n < 0) throw new java.io.EOFException("the adapter closed the connection");
+            for (int i = 0; i < n; i++) {
+                byte b = chunk[i];
+                if (b == '>') return buf.toString();
+                if (b != 0) buf.append((char) (b & 0xFF));
+            }
+        }
     }
 
     @PluginMethod

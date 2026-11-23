@@ -81,10 +81,7 @@
 
   async function poll(token) {
     let failures = 0, cycle = 0;
-    const timedOut = (e) => {
-      if (!e.timeout) throw e;
-      if (++failures >= 5) throw new Error("adapter stopped responding");
-    };
+    const misses = new Map();   // factory sensor -> passes in a row without an answer
     while (token === loopToken) {
       let codes = [...new Set([...wanted, ...(store.recording ? recordCodes : [])])].sort();
       if (!codes.length) { await new Promise((r) => setTimeout(r, 200)); continue; }
@@ -97,20 +94,23 @@
       if (calc.length) {   // poll what the calculated sensors need, once each
         codes = [...new Set([...codes.filter((c) => !calc.includes(c)), ...Economy.needed(elm.supported, calc)])].sort();
       }
+      // Standard PIDs the car says it lacks are skipped. Factory sensors that haven't answered
+      // 3 times in a row are only asked every 20th pass, so they don't slow down the rest.
+      codes = codes.filter((c) => {
+        const s = registry.get(c);
+        if (c !== "RV" && !s) return false;
+        if (s && s.standard && elm.supported.size && !elm.supported.has(c)) return false;
+        if (s && !s.standard && (misses.get(c) || 0) >= 3 && cycle % 20) return false;
+        return true;
+      });
       const start = performance.now();
-      const values = {};
-      const std = codes.filter((c) => { const s = registry.get(c); return s && s.standard && (!elm.supported.size || elm.supported.has(c)); });
-      if (std.length) {
-        try { Object.assign(values, await elm.readStandard(std)); failures = 0; } catch (e) { timedOut(e); }
-      }
-      for (const code of codes) {
-        if (std.includes(code)) continue;
-        const s = registry.get(code);
-        if (code !== "RV" && !s) continue;
-        // Standard PIDs the car says it lacks are skipped; factory ones are always tried.
-        if (s && s.standard && elm.supported.size && !elm.supported.has(code)) continue;
-        try { values[code] = await elm.read(code); failures = 0; } catch (e) { timedOut(e); }
-        if (token !== loopToken) return;
+      const { values, timeouts, requests } = await elm.readCycle(codes);
+      if (requests && timeouts === requests) {
+        if (++failures >= 5) throw new Error("adapter stopped responding");
+      } else failures = 0;
+      for (const c of codes) {
+        const s = registry.get(c);
+        if (s && !s.standard) misses.set(c, values[c] == null ? (misses.get(c) || 0) + 1 : 0);
       }
       if (token !== loopToken) return;
       const secs = (performance.now() - start) / 1000;
